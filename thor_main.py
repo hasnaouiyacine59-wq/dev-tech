@@ -277,23 +277,56 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
     _pw_ver = ".".join(importlib.metadata.version("playwright").split(".")[:2])
     _chrome_ver = PLAYWRIGHT_CHROMIUM_VERSION.get(_pw_ver, "124")
 
-    # Desktop Windows Chrome UAs matched to actual Chromium version
-    DESKTOP_UAS = [
+    # Desktop UAs from user_agnt + version-matched Chrome fallbacks
+    DESKTOP_UAS = list(user_agnt.user_agent_list) or [
         f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{_chrome_ver}.0.0.0 Safari/537.36",
         f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{_chrome_ver}.0.0.0 Safari/537.36 Edg/{_chrome_ver}.0.0.0",
         f"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{_chrome_ver}.0.0.0 Safari/537.36",
         f"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{_chrome_ver}.0.0.0 Safari/537.36",
     ]
 
+    # Mobile device profiles: (ua, viewport, touch, webgl_vendor, webgl_renderer, hw, mem, platform, ua_platform, ua_platform_ver, model)
+    MOBILE_PROFILES = [
+        (f"Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{_chrome_ver}.0.0.0 Mobile Safari/537.36",
+         {"width": 393, "height": 851},  True, "Google Inc.", "ANGLE (Qualcomm, Adreno (TM) 730, OpenGL ES 3.2)", 8, 8, "Linux armv8l", "Android", "13.0.0", "Pixel 7"),
+        (f"Mozilla/5.0 (Linux; Android 13; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{_chrome_ver}.0.0.0 Mobile Safari/537.36",
+         {"width": 412, "height": 915},  True, "Google Inc.", "ANGLE (Qualcomm, Adreno (TM) 650, OpenGL ES 3.2)", 8, 8, "Linux armv8l", "Android", "13.0.0", "Pixel 6"),
+        (f"Mozilla/5.0 (Linux; Android 12; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{_chrome_ver}.0.0.0 Mobile Safari/537.36",
+         {"width": 360, "height": 800},  True, "Google Inc.", "ANGLE (ARM, Mali-G78, OpenGL ES 3.2)", 8, 8, "Linux armv8l", "Android", "12.0.0", "SM-G991B"),
+        (f"Mozilla/5.0 (Linux; Android 13; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{_chrome_ver}.0.0.0 Mobile Safari/537.36",
+         {"width": 360, "height": 780},  True, "Google Inc.", "ANGLE (Qualcomm, Adreno (TM) 740, OpenGL ES 3.2)", 8, 12, "Linux armv8l", "Android", "13.0.0", "SM-S918B"),
+        (f"Mozilla/5.0 (Linux; Android 12; Redmi Note 11) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{_chrome_ver}.0.0.0 Mobile Safari/537.36",
+         {"width": 393, "height": 873},  True, "Google Inc.", "ANGLE (Qualcomm, Adreno (TM) 680, OpenGL ES 3.2)", 8, 6, "Linux armv8l", "Android", "12.0.0", "Redmi Note 11"),
+        ("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+         {"width": 390, "height": 844},  True, "Apple Inc.", "Apple A16 GPU", 6, 6, "iPhone", "iOS", "17.0.0", "iPhone"),
+        ("Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
+         {"width": 375, "height": 812},  True, "Apple Inc.", "Apple A15 GPU", 6, 6, "iPhone", "iOS", "16.6.0", "iPhone"),
+        ("Mozilla/5.0 (iPad; CPU OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
+         {"width": 820, "height": 1180}, True, "Apple Inc.", "Apple M1 GPU", 8, 8, "iPad",   "iOS", "16.6.0", "iPad"),
+    ]
+
+    # 70% desktop, 30% mobile — mirrors real traffic split
+    is_mobile = random.random() < 0.30
+
     with sync_playwright() as p:
-        browser_type    = p.chromium
-        chosen_viewport = random.choice(VIEWPORTS)
-        chrome_ua       = random.choice(DESKTOP_UAS)
+        browser_type = p.chromium
+
+        if is_mobile:
+            mob = random.choice(MOBILE_PROFILES)
+            (chrome_ua, chosen_viewport, _has_touch,
+             _webgl_v, _webgl_r, _hw, _mem,
+             _platform, _ua_platform, _ua_platform_ver, _model) = mob
+            is_ios = "iPhone" in chrome_ua or "iPad" in chrome_ua
+        else:
+            chosen_viewport = random.choice(VIEWPORTS)
+            chrome_ua       = random.choice(DESKTOP_UAS)
+            is_ios          = False
 
         _print("\n" + "═" * 52)
         _print(f"  SESSION #{session_id}")
         _print("═" * 52)
         _print(f"  {'Version':<14}: {VERSION}")
+        _print(f"  {'Device':<14}: {'Mobile' if is_mobile else 'Desktop'}")
         _print(f"  {'Name':<14}: {NAME}")
         _print(f"  {'Email':<14}: {EMAIL}")
         _print(f"  {'Proxy':<14}: {proxy_url or TOR_PROXY}")
@@ -311,12 +344,14 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
             viewport=chosen_viewport,
             locale=locale,
             timezone_id=chosen_tz,
+            has_touch=is_mobile,
+            is_mobile=is_mobile,
             args=[
                 "--disable-blink-features=AutomationControlled",
                 "--no-sandbox",
                 "--disable-infobars",
                 "--disable-dev-shm-usage",
-                "--window-size=1920,1080",
+                f"--window-size={chosen_viewport['width']},{chosen_viewport['height']}",
             ],
             ignore_default_args=["--enable-automation"],
         )
@@ -327,8 +362,8 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
         try:
             page = context.pages[0] if context.pages else context.new_page()
 
-            hw_concurrency  = random.choice([2, 4, 8])
-            device_memory   = random.choice([2, 4, 8])
+            hw_concurrency  = _hw  if is_mobile else random.choice([2, 4, 8])
+            device_memory   = _mem if is_mobile else random.choice([2, 4, 8])
             battery_level   = round(random.uniform(0.6, 1.0), 2)
             battery_charging = random.choice(["true", "false"])
             rtt             = random.choice([50, 100, 150])
@@ -403,10 +438,14 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
                 ("ARM",                   "Mali-G78"),
                 ("ARM",                   "Mali-G710"),
             ]
-            webgl_vendor, webgl_renderer = random.choice(webgl_vendors)
+            webgl_vendor, webgl_renderer = (_webgl_v, _webgl_r) if is_mobile else random.choice(webgl_vendors)
 
             # Derive platform string from UA for consistency
-            if "Windows" in chrome_ua:
+            if is_mobile:
+                _platform        = _platform
+                _ua_platform     = _ua_platform
+                _ua_platform_ver = _ua_platform_ver
+            elif "Windows" in chrome_ua:
                 _platform = "Win32"
                 _ua_platform = "Windows"
                 _ua_platform_ver = "10.0.0"
@@ -490,11 +529,11 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
                         {{ brand: 'Google Chrome',  version: '{_chrome_ver}' }},
                         {{ brand: 'Not=A?Brand',    version: '99'            }},
                     ],
-                    mobile: false,
+                    mobile: {'true' if is_mobile else 'false'},
                     platform: '{_ua_platform}',
                     getHighEntropyValues: (hints) => Promise.resolve({{
-                        architecture: 'x86',
-                        bitness: '64',
+                        architecture: {'""' if is_mobile else '"x86"'},
+                        bitness: {'""' if is_mobile else '"64"'},
                         brands: [
                             {{ brand: 'Chromium',      version: '{_chrome_ver}' }},
                             {{ brand: 'Google Chrome', version: '{_chrome_ver}' }},
@@ -505,14 +544,18 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
                             {{ brand: 'Google Chrome', version: '{_chrome_ver}.0.0.0' }},
                             {{ brand: 'Not=A?Brand',   version: '99.0.0.0'            }},
                         ],
-                        mobile: false,
-                        model: '',
+                        mobile: {'true' if is_mobile else 'false'},
+                        model: '{"" if not is_mobile else _model}',
                         platform: '{_ua_platform}',
                         platformVersion: '{_ua_platform_ver}',
                         uaFullVersion: '{_chrome_ver}.0.0.0',
                         wow64: false,
                     }}),
                 }})}});
+
+                // --- touch support ---
+                {'Object.defineProperty(navigator, "maxTouchPoints", { get: () => 5 });' if is_mobile else 'Object.defineProperty(navigator, "maxTouchPoints", { get: () => 0 });'}
+                {'window.ontouchstart = null;' if is_mobile else ''}
 
                 // --- language / locale ---
                 Object.defineProperty(navigator, 'languages', {{ get: () => ['{lang_primary}', '{lang_base}'] }});
