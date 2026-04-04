@@ -1,6 +1,6 @@
 VERSION = "2.0.0 beta :)"
 
-import random, os, string, sys
+import random, os, string, sys, json
 import argparse
 import atexit
 import requests
@@ -666,66 +666,182 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
             """)
 
             page.goto(f"https://mohmal.eu.org/?{EMAIL}", wait_until="domcontentloaded", timeout=60000)
-            time.sleep(2)
+            time.sleep(3)
 
-            for i, frame in enumerate(page.frames[1:][:2]):
+            AD_LOG_FILE = os.path.join(BASE_DIR, "ads_log.jsonl")
+            AD_NETWORKS = {
+                "a-ads.com": "A-ADS", "acceptable.a-ads.com": "A-ADS",
+                "googlesyndication.com": "Google AdSense",
+                "doubleclick.net": "Google DFP",
+                "adnxs.com": "AppNexus",
+                "moatads.com": "Moat",
+                "amazon-adsystem.com": "Amazon Ads",
+                "media.net": "Media.net",
+            }
+
+            def detect_network(url: str) -> str:
+                for domain, name in AD_NETWORKS.items():
+                    if domain in url:
+                        return name
+                return None  # None = not an ad network
+
+            # ── 1. DETECT — only iframes whose src belongs to a known ad network ──
+            iframe_handles = page.locator("iframe").all()
+            detected_ads = []
+            for ih in iframe_handles:
                 try:
-                    frame.click("body", timeout=13000)
-                    _print(f"Clicked iframe #{i+1}: {frame.url[:60]}")
-                    time.sleep(1)
-                    try:
-                        text = frame.locator("body").inner_text(timeout=5000).strip()
-                        if text:
-                            _print(f"iframe #{i+1} text: {text[:300]}")
-                    except Exception:
-                        pass
+                    src     = ih.get_attribute("src") or ""
+                    data_aa = ih.get_attribute("data-aa") or ""
+                    network = detect_network(src)
+                    # include if known network OR has data-aa (A-ADS marker)
+                    if not network and not data_aa:
+                        continue
+                    network = network or "A-ADS"
+                    bb = ih.bounding_box()
+                    detected_ads.append({
+                        "data_aa": data_aa,
+                        "src":     src,
+                        "network": network,
+                        "size":    f"{int(bb['width'])}x{int(bb['height'])}" if bb else "unknown",
+                        "x": bb["x"] if bb else 0,
+                        "y": bb["y"] if bb else 0,
+                        "text": None, "click_url": None, "loaded": False,
+                    })
+                except Exception:
+                    continue
+
+            _print(f"\n── 1. DETECTED {len(detected_ads)} ad iframe(s) ─────────────")
+            for ad in detected_ads:
+                _print(f"   [{ad['network']}] id={ad['data_aa'] or 'n/a'} size={ad['size']}")
+
+            # ── 2+3. VIEW + ANALYSE — one pass: scroll → hover → dwell → read ──
+            _print("\n── 2+3. VIEW + ANALYSE ───────────────────────────────")
+            for ad in detected_ads:
+                try:
+                    selector = f"iframe[data-aa='{ad['data_aa']}']" if ad["data_aa"] \
+                               else f"iframe[src*='{ad['src'].lstrip('/').split('?')[0][:40]}']"
+                    el = page.locator(selector).first
+                    el.scroll_into_view_if_needed(timeout=5000)
+                    time.sleep(random.uniform(0.5, 1.2))
+                    bb = el.bounding_box()
+                    if bb:
+                        cx = bb["x"] + bb["width"]  * random.uniform(0.3, 0.7)
+                        cy = bb["y"] + bb["height"] * random.uniform(0.3, 0.7)
+                        page.mouse.move(cx, cy, steps=random.randint(8, 20))
+                        dwell = random.uniform(3.0, 7.0)
+                        _print(f"   👁  [{ad['network']}] #{ad['data_aa'] or 'n/a'} — dwell {dwell:.1f}s")
+                        time.sleep(dwell)
                 except Exception as e:
-                    _print(f"iframe #{i+1} click failed: {e}")
-                if i == 0:
-                    page.bring_to_front()
-                    time.sleep(1)
+                    _print(f"   ⚠  Scroll/hover failed: {e}")
 
-            page.bring_to_front()
-            time.sleep(10)
+                # match frame — resolve // prefix and strip query string for matching
+                src_key = ad["src"].lstrip("/").split("?")[0]
+                ad_frame = None
+                for f in page.frames:
+                    if (ad["data_aa"] and ad["data_aa"] in f.url) or \
+                       (src_key and src_key in f.url):
+                        ad_frame = f
+                        break
+                if not ad_frame:
+                    time.sleep(2)
+                    for f in page.frames:
+                        if (ad["data_aa"] and ad["data_aa"] in f.url) or \
+                           (src_key and src_key in f.url):
+                            ad_frame = f
+                            break
 
-            for i, pg in enumerate(context.pages):
+                if ad_frame:
+                    ad["loaded"] = True
+                    for sel in ["a", ".aa-title", ".aa-description", "h1,h2,h3", "p", "body"]:
+                        try:
+                            el_f = ad_frame.locator(sel).first
+                            text = el_f.inner_text(timeout=2000).strip()
+                            href = el_f.get_attribute("href") if sel == "a" else None
+                            if text:
+                                ad["text"]      = text[:200]
+                                ad["click_url"] = href
+                                break
+                        except Exception:
+                            continue
+                    ad["text"] = ad["text"] or "<empty>"
+                else:
+                    ad["text"] = "<frame not found>"
+
+                status = "✅" if ad["loaded"] else "❌"
+                _print(f"   {status} [{ad['network']}] #{ad['data_aa'] or 'n/a'}")
+                _print(f"      Text : {ad['text']}")
+                if ad["click_url"]:
+                    _print(f"      Link : {ad['click_url'][:80]}")
+
+            # ── 4. CLICK — 1 random loaded ad, catch new tab ──────────────
+            _print("\n── 4. CLICK ──────────────────────────────────────────")
+            clickable = [a for a in detected_ads if a["loaded"] and a["text"] not in ("<empty>", "<frame not found>")]
+            if clickable and random.random() < 0.25:
+                target = random.choice(clickable)
                 try:
-                    _print(f"[tab {i}] title: {pg.title()}")
-                except Exception:
-                    _print(f"[tab {i}] title: <navigating>")
+                    selector = f"iframe[data-aa='{target['data_aa']}']" if target["data_aa"] \
+                               else f"iframe[src*='{target['src'].lstrip('/').split('?')[0][:40]}']"
+                    el = page.locator(selector).first
+                    el.scroll_into_view_if_needed(timeout=5000)
+                    time.sleep(random.uniform(1.0, 2.5))
+                    bb = el.bounding_box()
+                    if bb:
+                        cx = bb["x"] + bb["width"]  * random.uniform(0.3, 0.7)
+                        cy = bb["y"] + bb["height"] * random.uniform(0.3, 0.7)
+                        page.mouse.move(cx, cy, steps=random.randint(10, 25))
+                        time.sleep(random.uniform(0.3, 0.8))
 
-            if len(context.pages) > 1:
-                second_tab = context.pages[1]
-                second_tab.bring_to_front()
-                try:
-                    _print(f"Switched to tab 1: {second_tab.title()}")
-                except Exception:
-                    _print("Switched to tab 1: <navigating>")
-                time.sleep(2)
-                page.bring_to_front()
-                try:
-                    _print(f"Back to tab 0: {page.title()}")
-                except Exception:
-                    _print("Back to tab 0: <navigating>")
+                        with context.expect_page(timeout=8000) as new_tab_info:
+                            page.mouse.click(cx, cy)
 
-            target_handler = page
-            for frame in page.frames:
-                if "2420628" in frame.url and frame != page.main_frame:
-                    target_handler = frame
-                    _print(f"Found app frame: {frame.url}")
-                    break
+                        new_tab = new_tab_info.value
+                        _print(f"   🖱  Clicked ad #{target['data_aa'] or 'n/a'} [{target['network']}]")
+                        try:
+                            new_tab.wait_for_load_state("domcontentloaded", timeout=15000)
+                        except Exception:
+                            pass
 
-            try:
-                button = target_handler.locator("button:has-text('Random'), a:has-text('Create'), #create-email")
-                button.wait_for(state="visible", timeout=15000)
-                button.click()
-                _print("Clicked the create button.")
-            except Exception as e:
-                _print(f"Failed to click mohmal button: {e}")
-                page.screenshot(path=os.path.join(BASE_DIR, f"debug_{session_id}_mohmal.png"))
+                        tab_url   = new_tab.url
+                        tab_title = "<unknown>"
+                        tab_text  = "<none>"
+                        try: tab_title = new_tab.title()
+                        except Exception: pass
+                        try: tab_text = new_tab.locator("h1, h2, h3, p").first.inner_text(timeout=3000).strip()[:200]
+                        except Exception: pass
 
-            time.sleep(20)
+                        _print(f"   🆕 New tab:")
+                        _print(f"      URL   : {tab_url[:100]}")
+                        _print(f"      Title : {tab_title}")
+                        _print(f"      Text  : {tab_text}")
+                        target["landing_url"]   = tab_url
+                        target["landing_title"] = tab_title
+                        target["landing_text"]  = tab_text
+                        dwell = random.uniform(5.0, 12.0)
+                        _print(f"   ⏱  Dwelling {dwell:.1f}s...")
+                        time.sleep(dwell)
+                        new_tab.close()
+                        _print("   ✅ Tab closed")
+                except Exception as e:
+                    _print(f"   ⚠  Click failed: {e}")
+            else:
+                _print("   ⏭  No click this session")
+
+            # ── single log write at end with all data ─────────────────────
+            with open(AD_LOG_FILE, "a") as f:
+                f.write(json.dumps({
+                    "ts":     time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "session": session_id,
+                    "ip":     ip_info.get("ip"),
+                    "cc":     cc,
+                    "device": "mobile" if is_mobile else "desktop",
+                    "ads":    detected_ads,
+                }) + "\n")
+
+            _print("─────────────────────────────────────────────────────\n")
+            time.sleep(random.uniform(5.0, 10.0))
             _print(f"Current URL: {page.url}")
+
+
 
         finally:
             context.close()
