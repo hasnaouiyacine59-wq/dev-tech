@@ -1,3 +1,5 @@
+VERSION = "1.0.0"
+
 import random, os, string, sys
 import argparse
 import atexit
@@ -225,6 +227,7 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
         _print("\n" + "═" * 52)
         _print(f"  SESSION #{session_id}")
         _print("═" * 52)
+        _print(f"  {'Version':<14}: {VERSION}")
         _print(f"  {'Name':<14}: {NAME}")
         _print(f"  {'Email':<14}: {EMAIL}")
         _print(f"  {'Proxy':<14}: {proxy_url or TOR_PROXY}")
