@@ -13,7 +13,7 @@ from xvfbwrapper import Xvfb
 BASE_DIR        = os.path.dirname(os.path.abspath(__file__))
 PROXY_FILE      = os.path.join(BASE_DIR, "proxies.txt")
 USED_PROXY_FILE = os.path.join(BASE_DIR, "used_proxies.txt")
-LOG_FILE        = "/logs/ip_log.txt"
+LOG_FILE        = os.path.expanduser("~/logs/ip_log.txt")
 REQUEST_TIMEOUT = 15
 
 def _test_proxy(proxy: str, timeout: int) -> bool:
@@ -1172,7 +1172,23 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
                     if new_tab:
                         _print(f"   🖱  Clicked ad #{target['data_aa'] or 'n/a'} [{target['network']}]")
                         try:
-                            new_tab.wait_for_load_state("domcontentloaded", timeout=15000)
+                            new_tab.wait_for_load_state("domcontentloaded", timeout=20000)
+                        except Exception:
+                            pass
+
+                        # extra wait if page title is still loading
+                        for _ in range(6):
+                            try:
+                                t = new_tab.title()
+                                if t and t not in ("", "about:blank"):
+                                    break
+                            except Exception:
+                                pass
+                            time.sleep(2)
+
+                        # wait for networkidle — page fully settled
+                        try:
+                            new_tab.wait_for_load_state("networkidle", timeout=15000)
                         except Exception:
                             pass
 
@@ -1181,7 +1197,7 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
                         tab_text  = "<none>"
                         try: tab_title = new_tab.title()
                         except Exception: pass
-                        try: tab_text = new_tab.locator("h1, h2, h3, p").first.inner_text(timeout=3000).strip()[:200]
+                        try: tab_text = new_tab.locator("h1, h2, h3, p").first.inner_text(timeout=5000).strip()[:200]
                         except Exception: pass
 
                         _print(f"   🆕 New tab:")
@@ -1193,13 +1209,16 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
                         target["landing_text"]  = tab_text
 
                         # scroll landing page during dwell — mimics reading
-                        dwell = random.uniform(5.0, 12.0)
+                        dwell = random.uniform(12.0, 22.0)
                         _print(f"   ⏱  Dwelling {dwell:.1f}s...")
-                        half = dwell / 2
-                        time.sleep(half)
-                        try: new_tab.mouse.wheel(0, random.randint(300, 700))
+                        third = dwell / 3
+                        time.sleep(third)
+                        try: new_tab.mouse.wheel(0, random.randint(300, 600))
                         except Exception: pass
-                        time.sleep(dwell - half)
+                        time.sleep(third)
+                        try: new_tab.mouse.wheel(0, random.randint(200, 500))
+                        except Exception: pass
+                        time.sleep(dwell - third * 2)
                         new_tab.close()
                         _print("   ✅ Tab closed")
 
