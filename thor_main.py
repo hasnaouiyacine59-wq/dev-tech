@@ -1,4 +1,4 @@
-VERSION = "2.0.0 beta :)"
+VERSION = "3.0.0"
 
 import random, os, string, sys, json
 import argparse
@@ -82,14 +82,14 @@ CC_LANG = {
     "RU": ("ru-RU", "Europe/Moscow",         "ru-RU,ru;q=0.9,en;q=0.8"),
     "TR": ("tr-TR", "Europe/Istanbul",       "tr-TR,tr;q=0.9,en;q=0.8"),
     "JP": ("ja-JP", "Asia/Tokyo",            "ja-JP,ja;q=0.9,en;q=0.8"),
-    "CN": ("zh-CN", "Asia/Shanghai",         "zh-CN,zh;q=0.9,en;q=0.8"),
+    "CN": ("zh-CN", "Asia/Shanghai",         "zh-CN,zh-Hans;q=0.9,en;q=0.8"),
     "SE": ("sv-SE", "Europe/Stockholm",      "sv-SE,sv;q=0.9,en;q=0.8"),
     "MX": ("es-MX", "America/Mexico_City",   "es-MX,es;q=0.9,en;q=0.8"),
     "IN": ("en-IN", "Asia/Kolkata",          "en-IN,en;q=0.9,hi;q=0.8"),
     "AU": ("en-AU", "Australia/Sydney",      "en-AU,en;q=0.9"),
     "CA": ("en-CA", "America/Toronto",       "en-CA,en;q=0.9,fr;q=0.8"),
     "AR": ("es-AR", "America/Argentina/Buenos_Aires", "es-AR,es;q=0.9,en;q=0.8"),
-    "UA": ("uk-UA", "Europe/Kiev",           "uk-UA,uk;q=0.9,en;q=0.8"),
+    "UA": ("uk-UA", "Europe/Kyiv",           "uk-UA,uk;q=0.9,en;q=0.8"),
     "RO": ("ro-RO", "Europe/Bucharest",      "ro-RO,ro;q=0.9,en;q=0.8"),
     "HU": ("hu-HU", "Europe/Budapest",       "hu-HU,hu;q=0.9,en;q=0.8"),
     "CZ": ("cs-CZ", "Europe/Prague",         "cs-CZ,cs;q=0.9,en;q=0.8"),
@@ -107,7 +107,7 @@ CC_LANG = {
     "KR": ("ko-KR", "Asia/Seoul",            "ko-KR,ko;q=0.9,en;q=0.8"),
     "SG": ("en-SG", "Asia/Singapore",        "en-SG,en;q=0.9,zh;q=0.8"),
     "MY": ("ms-MY", "Asia/Kuala_Lumpur",     "ms-MY,ms;q=0.9,en;q=0.8"),
-    "NO": ("nb-NO", "Europe/Oslo",           "nb-NO,nb;q=0.9,en;q=0.8"),
+    "NO": ("nb-NO", "Europe/Oslo",           "nb-NO,nb;q=0.9,no;q=0.8,en;q=0.7"),
     "FI": ("fi-FI", "Europe/Helsinki",       "fi-FI,fi;q=0.9,en;q=0.8"),
     "DK": ("da-DK", "Europe/Copenhagen",     "da-DK,da;q=0.9,en;q=0.8"),
     "CH": ("de-CH", "Europe/Zurich",         "de-CH,de;q=0.9,en;q=0.8"),
@@ -137,10 +137,10 @@ CC_LANG = {
     "BD": ("bn-BD", "Asia/Dhaka",            "bn-BD,bn;q=0.9,en;q=0.8"),
     "LK": ("si-LK", "Asia/Colombo",          "si-LK,si;q=0.9,en;q=0.8"),
     "NP": ("ne-NP", "Asia/Kathmandu",        "ne-NP,ne;q=0.9,en;q=0.8"),
-    "MM": ("my-MM", "Asia/Rangoon",          "my-MM,my;q=0.9,en;q=0.8"),
+    "MM": ("my-MM", "Asia/Yangon",          "my-MM,my;q=0.9,en;q=0.8"),
     "KH": ("km-KH", "Asia/Phnom_Penh",       "km-KH,km;q=0.9,en;q=0.8"),
-    "HK": ("zh-HK", "Asia/Hong_Kong",        "zh-HK,zh;q=0.9,en;q=0.8"),
-    "TW": ("zh-TW", "Asia/Taipei",           "zh-TW,zh;q=0.9,en;q=0.8"),
+    "HK": ("zh-HK", "Asia/Hong_Kong",        "zh-HK,zh-Hant;q=0.9,en;q=0.8"),
+    "TW": ("zh-TW", "Asia/Taipei",           "zh-TW,zh-Hant;q=0.9,en;q=0.8"),
     "MN": ("mn-MN", "Asia/Ulaanbaatar",      "mn-MN,mn;q=0.9,en;q=0.8"),
     "UZ": ("uz-UZ", "Asia/Tashkent",         "uz-UZ,uz;q=0.9,ru;q=0.8,en;q=0.7"),
     "KZ": ("kk-KZ", "Asia/Almaty",           "kk-KZ,kk;q=0.9,ru;q=0.8,en;q=0.7"),
@@ -151,7 +151,7 @@ CC_LANG = {
     "SK": ("sk-SK", "Europe/Bratislava",     "sk-SK,sk;q=0.9,en;q=0.8"),
     "SI": ("sl-SI", "Europe/Ljubljana",      "sl-SI,sl;q=0.9,en;q=0.8"),
     "HR": ("hr-HR", "Europe/Zagreb",         "hr-HR,hr;q=0.9,en;q=0.8"),
-    "RS": ("sr-RS", "Europe/Belgrade",       "sr-RS,sr;q=0.9,en;q=0.8"),
+    "RS": ("sr-RS", "Europe/Belgrade",       "sr-RS,sr-Cyrl;q=0.9,en;q=0.8"),
     "BG": ("bg-BG", "Europe/Sofia",          "bg-BG,bg;q=0.9,en;q=0.8"),
     "LT": ("lt-LT", "Europe/Vilnius",        "lt-LT,lt;q=0.9,en;q=0.8"),
     "LV": ("lv-LV", "Europe/Riga",           "lv-LV,lv;q=0.9,en;q=0.8"),
@@ -249,9 +249,19 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
     proxy_url = proxy_config.get("server") if proxy_config else None
     ip_info   = get_ip_info(proxy_url)
     cc        = (ip_info.get("country_code") or "US").upper()
-    locale, chosen_tz, _ = CC_LANG.get(cc, CC_LANG["US"])
+    locale, chosen_tz, accept_lang = CC_LANG.get(cc, CC_LANG["US"])
+    # US has multiple timezones — randomize to avoid always mapping to New York
+    if cc == "US":
+        chosen_tz = random.choice([
+            "America/New_York", "America/Chicago", "America/Denver",
+            "America/Los_Angeles", "America/Phoenix", "America/Anchorage",
+        ])
     lang_primary = locale
-    lang_base    = locale.split("-")[0]
+    # correct lang_base for zh variants (zh-CN→zh-Hans, zh-HK/TW→zh-Hant)
+    if locale.startswith("zh-"):
+        lang_base = "zh-Hans" if locale == "zh-CN" else "zh-Hant"
+    else:
+        lang_base = locale.split("-")[0]
     _print(f"IP: {ip_info.get('ip')} | {ip_info.get('country')} ({cc}) → locale={locale} tz={chosen_tz}")
     os.environ["TZ"] = chosen_tz
     time.tzset()
@@ -338,7 +348,7 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
         _print("═" * 52 + "\n")
 
         launch_kwargs = dict(
-            headless=False,
+            headless=not _args.debug,
             proxy=proxy_config,
             user_agent=chrome_ua,
             viewport=chosen_viewport,
@@ -346,6 +356,7 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
             timezone_id=chosen_tz,
             has_touch=is_mobile,
             is_mobile=is_mobile,
+            extra_http_headers={"Accept-Language": accept_lang},
             args=[
                 "--disable-blink-features=AutomationControlled",
                 "--no-sandbox",
@@ -378,67 +389,51 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
                 "Europe/Stockholm": -60, "Asia/Tokyo": -540, "Asia/Shanghai": -480,
             }
             tz_offset = tz_offset_map.get(chosen_tz, 0)
-            webgl_vendors  = [
-                ("Intel Inc.",            "Intel Iris OpenGL Engine"),
-                ("Intel Inc.",            "Intel Iris Pro OpenGL Engine"),
-                ("Intel Inc.",            "Intel HD Graphics 630"),
-                ("Intel Inc.",            "Intel UHD Graphics 770"),
-                ("Intel Inc.",            "Intel Iris Plus Graphics"),
-                ("Intel",                 "Intel(R) UHD Graphics 630"),
-                ("Intel",                 "Intel(R) UHD Graphics 620"),
-                ("Intel",                 "Intel(R) HD Graphics 520"),
-                ("Intel",                 "Intel(R) HD Graphics 620"),
-                ("Intel",                 "Intel(R) Iris(R) Xe Graphics"),
-                ("Intel",                 "Intel(R) Iris(R) Plus Graphics 640"),
-                ("Google Inc.",           "ANGLE (Intel, Mesa Intel(R) UHD Graphics 620, OpenGL 4.6)"),
-                ("Google Inc.",           "ANGLE (Intel, Mesa Intel(R) UHD Graphics 630, OpenGL 4.6)"),
-                ("Google Inc.",           "ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0)"),
-                ("Google Inc.",           "ANGLE (Intel, Intel(R) UHD Graphics 620 Direct3D11 vs_5_0 ps_5_0)"),
-                ("Google Inc.",           "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics Direct3D11 vs_5_0 ps_5_0)"),
-                ("Google Inc.",           "ANGLE (Intel, Intel(R) Iris(R) Plus Graphics Direct3D11 vs_5_0 ps_5_0)"),
-                ("Google Inc.",           "ANGLE (NVIDIA, NVIDIA GeForce GTX 1050 Direct3D11 vs_5_0 ps_5_0)"),
-                ("Google Inc.",           "ANGLE (NVIDIA, NVIDIA GeForce GTX 1650 Direct3D11 vs_5_0 ps_5_0)"),
-                ("Google Inc.",           "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0)"),
-                ("Google Inc.",           "ANGLE (NVIDIA, NVIDIA GeForce RTX 2070 Direct3D11 vs_5_0 ps_5_0)"),
-                ("Google Inc.",           "ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0)"),
-                ("Google Inc.",           "ANGLE (NVIDIA, NVIDIA GeForce RTX 3080 Direct3D11 vs_5_0 ps_5_0)"),
-                ("Google Inc.",           "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 Direct3D11 vs_5_0 ps_5_0)"),
-                ("Google Inc.",           "ANGLE (AMD, AMD Radeon RX 570 Direct3D11 vs_5_0 ps_5_0)"),
-                ("Google Inc.",           "ANGLE (AMD, AMD Radeon RX 580 Direct3D11 vs_5_0 ps_5_0)"),
-                ("Google Inc.",           "ANGLE (AMD, AMD Radeon RX 6600 XT Direct3D11 vs_5_0 ps_5_0)"),
-                ("Google Inc.",           "ANGLE (AMD, AMD Radeon RX 6700 XT Direct3D11 vs_5_0 ps_5_0)"),
-                ("Google Inc.",           "ANGLE (AMD, AMD Radeon(TM) Graphics Direct3D11 vs_5_0 ps_5_0)"),
-                ("NVIDIA Corporation",    "NVIDIA GeForce GTX 1050 Ti/PCIe/SSE2"),
-                ("NVIDIA Corporation",    "NVIDIA GeForce GTX 1060/PCIe/SSE2"),
-                ("NVIDIA Corporation",    "NVIDIA GeForce GTX 1650/PCIe/SSE2"),
-                ("NVIDIA Corporation",    "NVIDIA GeForce GTX 1660 Ti/PCIe/SSE2"),
-                ("NVIDIA Corporation",    "NVIDIA GeForce RTX 2060/PCIe/SSE2"),
-                ("NVIDIA Corporation",    "NVIDIA GeForce RTX 2070/PCIe/SSE2"),
-                ("NVIDIA Corporation",    "NVIDIA GeForce RTX 3060/PCIe/SSE2"),
-                ("NVIDIA Corporation",    "NVIDIA GeForce RTX 3070/PCIe/SSE2"),
-                ("NVIDIA Corporation",    "NVIDIA GeForce RTX 3080/PCIe/SSE2"),
-                ("NVIDIA Corporation",    "NVIDIA GeForce RTX 4070/PCIe/SSE2"),
-                ("ATI Technologies Inc.", "AMD Radeon Pro 5500M OpenGL Engine"),
-                ("ATI Technologies Inc.", "AMD Radeon Pro 5600M OpenGL Engine"),
-                ("ATI Technologies Inc.", "AMD Radeon Pro 560X OpenGL Engine"),
-                ("ATI Technologies Inc.", "AMD Radeon RX 570"),
-                ("ATI Technologies Inc.", "AMD Radeon RX 580"),
-                ("ATI Technologies Inc.", "AMD Radeon RX 6600 XT"),
-                ("ATI Technologies Inc.", "AMD Radeon RX 6700 XT"),
-                ("Apple Inc.",            "Apple M1"),
-                ("Apple Inc.",            "Apple M1 Pro"),
-                ("Apple Inc.",            "Apple M1 Max"),
-                ("Apple Inc.",            "Apple M2"),
-                ("Apple Inc.",            "Apple M2 Pro"),
-                ("Apple Inc.",            "Apple M3"),
-                ("Qualcomm",              "Adreno (TM) 618"),
-                ("Qualcomm",              "Adreno (TM) 640"),
-                ("Qualcomm",              "Adreno (TM) 650"),
-                ("Qualcomm",              "Adreno (TM) 660"),
-                ("ARM",                   "Mali-G78"),
-                ("ARM",                   "Mali-G710"),
+            # WebGL vendor/renderer must match the UA's OS — Chrome always uses ANGLE
+            _webgl_vendors_windows = [
+                ("Google Inc.", "ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)"),
+                ("Google Inc.", "ANGLE (Intel, Intel(R) UHD Graphics 620 Direct3D11 vs_5_0 ps_5_0, D3D11)"),
+                ("Google Inc.", "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)"),
+                ("Google Inc.", "ANGLE (Intel, Intel(R) Iris(R) Plus Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)"),
+                ("Google Inc.", "ANGLE (NVIDIA, NVIDIA GeForce GTX 1650 Direct3D11 vs_5_0 ps_5_0, D3D11)"),
+                ("Google Inc.", "ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Ti Direct3D11 vs_5_0 ps_5_0, D3D11)"),
+                ("Google Inc.", "ANGLE (NVIDIA, NVIDIA GeForce RTX 2070 Direct3D11 vs_5_0 ps_5_0, D3D11)"),
+                ("Google Inc.", "ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)"),
+                ("Google Inc.", "ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 Direct3D11 vs_5_0 ps_5_0, D3D11)"),
+                ("Google Inc.", "ANGLE (NVIDIA, NVIDIA GeForce RTX 3080 Direct3D11 vs_5_0 ps_5_0, D3D11)"),
+                ("Google Inc.", "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 Direct3D11 vs_5_0 ps_5_0, D3D11)"),
+                ("Google Inc.", "ANGLE (AMD, AMD Radeon RX 570 Direct3D11 vs_5_0 ps_5_0, D3D11)"),
+                ("Google Inc.", "ANGLE (AMD, AMD Radeon RX 580 Direct3D11 vs_5_0 ps_5_0, D3D11)"),
+                ("Google Inc.", "ANGLE (AMD, AMD Radeon RX 6600 XT Direct3D11 vs_5_0 ps_5_0, D3D11)"),
+                ("Google Inc.", "ANGLE (AMD, AMD Radeon RX 6700 XT Direct3D11 vs_5_0 ps_5_0, D3D11)"),
+                ("Google Inc.", "ANGLE (AMD, AMD Radeon(TM) Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)"),
             ]
-            webgl_vendor, webgl_renderer = (_webgl_v, _webgl_r) if is_mobile else random.choice(webgl_vendors)
+            _webgl_vendors_mac = [
+                ("Google Inc.", "ANGLE (Apple, ANGLE Metal Renderer: Apple M1, Unspecified Version)"),
+                ("Google Inc.", "ANGLE (Apple, ANGLE Metal Renderer: Apple M1 Pro, Unspecified Version)"),
+                ("Google Inc.", "ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)"),
+                ("Google Inc.", "ANGLE (Apple, ANGLE Metal Renderer: Apple M2 Pro, Unspecified Version)"),
+                ("Google Inc.", "ANGLE (Apple, ANGLE Metal Renderer: Apple M3, Unspecified Version)"),
+                ("Google Inc.", "ANGLE (Intel, ANGLE Metal Renderer: Intel(R) Iris(R) Plus Graphics, Unspecified Version)"),
+                ("Google Inc.", "ANGLE (AMD, ANGLE Metal Renderer: AMD Radeon Pro 5500M, Unspecified Version)"),
+            ]
+            _webgl_vendors_linux = [
+                ("Google Inc.", "ANGLE (Intel, Mesa Intel(R) UHD Graphics 620 (KBL GT2), OpenGL 4.6)"),
+                ("Google Inc.", "ANGLE (Intel, Mesa Intel(R) UHD Graphics 630 (CFL GT2), OpenGL 4.6)"),
+                ("Google Inc.", "ANGLE (Intel, Mesa Intel(R) Iris(R) Xe Graphics (TGL GT2), OpenGL 4.6)"),
+                ("Google Inc.", "ANGLE (AMD, AMD Radeon RX 580 (polaris10, LLVM 15.0.7, DRM 3.49, 6.1.0), OpenGL 4.6)"),
+                ("Google Inc.", "ANGLE (NVIDIA, NVIDIA GeForce GTX 1060/PCIe/SSE2, OpenGL 4.6)"),
+                ("Google Inc.", "ANGLE (NVIDIA, NVIDIA GeForce RTX 3060/PCIe/SSE2, OpenGL 4.6)"),
+            ]
+
+            if is_mobile:
+                webgl_vendor, webgl_renderer = _webgl_v, _webgl_r
+            elif "Windows" in chrome_ua:
+                webgl_vendor, webgl_renderer = random.choice(_webgl_vendors_windows)
+            elif "Macintosh" in chrome_ua:
+                webgl_vendor, webgl_renderer = random.choice(_webgl_vendors_mac)
+            else:
+                webgl_vendor, webgl_renderer = random.choice(_webgl_vendors_linux)
 
             # Derive platform string from UA for consistency
             if is_mobile:
@@ -458,212 +453,389 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
                 _ua_platform = "Linux"
                 _ua_platform_ver = "5.15.0"
 
-            page.add_init_script(f"""
-                // --- automation flags ---
-                Object.defineProperty(navigator, 'webdriver', {{ get: () => undefined }});
+            toolbar_height = random.randint(72, 92)
+            dpr = random.choice([1, 1.25, 1.5, 2]) if not is_mobile else random.choice([2, 2.5, 3])
+            # appVersion = everything after "Mozilla/" in the UA
+            _app_version = chrome_ua.replace("Mozilla/", "", 1) if chrome_ua.startswith("Mozilla/") else chrome_ua
 
-                // --- window.chrome (realistic) ---
+            context.add_init_script(f"""
+                // ── 0. Native toString hardening — must run first ──
+                (function() {{
+                    const _nativeToString = Function.prototype.toString;
+                    const _registry = new WeakMap();
+                    Function.prototype.toString = function() {{
+                        return _registry.has(this) ? _registry.get(this) : _nativeToString.call(this);
+                    }};
+                    // expose helper for patched functions to register their native string
+                    window.__nativeReg = (fn, name) => {{
+                        _registry.set(fn, `function ${{name}}() {{ [native code] }}`);
+                        return fn;
+                    }};
+                }})();
+
+                // ── 1. webdriver — delete from prototype so descriptor check passes ──
+                try {{ delete Object.getPrototypeOf(navigator).webdriver; }} catch(e) {{}}
+
+                // ── 2. window.chrome ──
                 window.chrome = {{
                     app: {{ isInstalled: false, InstallState: {{}}, RunningState: {{}} }},
-                    csi: () => ({{pageT: Date.now(), startE: Date.now(), tran: 15}}),
-                    loadTimes: () => ({{
-                        commitLoadTime: Date.now()/1000 - 0.4,
-                        connectionInfo: 'h2',
-                        finishDocumentLoadTime: Date.now()/1000 - 0.1,
-                        finishLoadTime: Date.now()/1000,
-                        firstPaintAfterLoadTime: 0,
-                        firstPaintTime: Date.now()/1000 - 0.3,
-                        navigationType: 'Other',
-                        npnNegotiatedProtocol: 'h2',
-                        requestTime: Date.now()/1000 - 0.5,
-                        startLoadTime: Date.now()/1000 - 0.5,
-                        wasAlternateProtocolAvailable: false,
-                        wasFetchedViaSpdy: true,
-                        wasNpnNegotiated: true,
-                    }}),
-                    runtime: {{
-                        OnInstalledReason: {{}},
-                        OnRestartRequiredReason: {{}},
-                        PlatformArch: {{}},
-                        PlatformNaclArch: {{}},
-                        PlatformOs: {{}},
-                        RequestUpdateCheckStatus: {{}},
-                        connect: () => {{}},
-                        sendMessage: () => {{}},
+                    csi: () => ({{ pageT: Date.now(), startE: Date.now(), tran: Math.floor(Math.random()*20)+1 }}),
+                    loadTimes: () => {{
+                        const t = Date.now() / 1000;
+                        return {{
+                            commitLoadTime: t - 0.4, connectionInfo: 'h2',
+                            finishDocumentLoadTime: t - 0.1, finishLoadTime: t,
+                            firstPaintAfterLoadTime: 0, firstPaintTime: t - 0.3,
+                            navigationType: 'Other', npnNegotiatedProtocol: 'h2',
+                            requestTime: t - 0.5, startLoadTime: t - 0.5,
+                            wasAlternateProtocolAvailable: false,
+                            wasFetchedViaSpdy: true, wasNpnNegotiated: true,
+                        }};
                     }},
+                    runtime: {{
+                        id: undefined, lastError: undefined,
+                        OnInstalledReason: {{}}, OnRestartRequiredReason: {{}},
+                        PlatformArch: {{}}, PlatformNaclArch: {{}},
+                        PlatformOs: {{}}, RequestUpdateCheckStatus: {{}},
+                        connect: () => undefined, sendMessage: () => undefined,
+                    }},
+                    webstore: {{ onInstallStageChanged: {{}}, onDownloadProgress: {{}} }},
                 }};
 
-                // --- plugins (realistic PDF plugin) ---
-                const _fakeMime = {{ type: 'application/pdf', suffixes: 'pdf', description: 'Portable Document Format', enabledPlugin: null }};
-                const _fakePlugin = {{
-                    name: 'PDF Viewer', filename: 'internal-pdf-viewer',
-                    description: 'Portable Document Format',
-                    length: 1, 0: _fakeMime,
-                    item: (i) => i === 0 ? _fakeMime : null,
-                    namedItem: (n) => n === 'application/pdf' ? _fakeMime : null,
-                    [Symbol.iterator]: function*() {{ yield _fakeMime; }}
-                }};
-                _fakeMime.enabledPlugin = _fakePlugin;
-                const _pluginArray = {{
-                    length: 1, 0: _fakePlugin,
-                    item: (i) => i === 0 ? _fakePlugin : null,
-                    namedItem: (n) => n === 'PDF Viewer' ? _fakePlugin : null,
-                    refresh: () => {{}},
-                    [Symbol.iterator]: function*() {{ yield _fakePlugin; }}
-                }};
-                Object.defineProperty(navigator, 'plugins',   {{ get: () => _pluginArray }});
-                Object.defineProperty(navigator, 'mimeTypes', {{ get: () => ({{
-                    length: 1, 0: _fakeMime,
-                    item: (i) => i === 0 ? _fakeMime : null,
-                    namedItem: (n) => n === 'application/pdf' ? _fakeMime : null,
-                    [Symbol.iterator]: function*() {{ yield _fakeMime; }}
-                }})}});
+                // ── 3. plugins — 3 entries matching real Chrome ──
+                (function() {{
+                    function _mime(type, suf, desc) {{
+                        return {{ type, suffixes: suf, description: desc, enabledPlugin: null }};
+                    }}
+                    function _plugin(name, fn, desc, mimes) {{
+                        const p = {{ name, filename: fn, description: desc, length: mimes.length }};
+                        mimes.forEach((m, i) => {{ p[i] = m; m.enabledPlugin = p; }});
+                        p.item = (i) => p[i] ?? null;
+                        p.namedItem = (n) => mimes.find(m => m.type === n) ?? null;
+                        p[Symbol.iterator] = function*() {{ for (let i=0;i<this.length;i++) yield this[i]; }};
+                        return p;
+                    }}
+                    const pdf1 = _mime('application/pdf', 'pdf', 'Portable Document Format');
+                    const pdf2 = _mime('text/pdf', 'pdf', 'Portable Document Format');
+                    const plugins = [
+                        _plugin('PDF Viewer',         'internal-pdf-viewer', 'Portable Document Format', [pdf1, pdf2]),
+                        _plugin('Chrome PDF Viewer',  'internal-pdf-viewer', 'Portable Document Format', [pdf1, pdf2]),
+                        _plugin('Chromium PDF Viewer','internal-pdf-viewer', 'Portable Document Format', [pdf1, pdf2]),
+                    ];
+                    const pa = {{ length: plugins.length }};
+                    plugins.forEach((p, i) => {{ pa[i] = p; }});
+                    pa.item = (i) => pa[i] ?? null;
+                    pa.namedItem = (n) => plugins.find(p => p.name === n) ?? null;
+                    pa.refresh = () => {{}};
+                    pa[Symbol.iterator] = function*() {{ for(let i=0;i<this.length;i++) yield this[i]; }};
+                    Object.defineProperty(navigator, 'plugins', {{ get: () => pa }});
+                    const allMimes = [pdf1, pdf2];
+                    const ma = {{ length: allMimes.length }};
+                    allMimes.forEach((m, i) => {{ ma[i] = m; }});
+                    ma.item = (i) => ma[i] ?? null;
+                    ma.namedItem = (n) => allMimes.find(m => m.type === n) ?? null;
+                    ma[Symbol.iterator] = function*() {{ for(let i=0;i<this.length;i++) yield this[i]; }};
+                    Object.defineProperty(navigator, 'mimeTypes', {{ get: () => ma }});
+                }})();
 
-                // --- platform ---
+                // ── 4. platform ──
                 Object.defineProperty(navigator, 'platform', {{ get: () => '{_platform}' }});
 
-                // --- userAgentData ---
-                Object.defineProperty(navigator, 'userAgentData', {{ get: () => ({{
-                    brands: [
-                        {{ brand: 'Chromium',       version: '{_chrome_ver}' }},
-                        {{ brand: 'Google Chrome',  version: '{_chrome_ver}' }},
-                        {{ brand: 'Not=A?Brand',    version: '99'            }},
-                    ],
-                    mobile: {'true' if is_mobile else 'false'},
-                    platform: '{_ua_platform}',
-                    getHighEntropyValues: (hints) => Promise.resolve({{
-                        architecture: {'""' if is_mobile else '"x86"'},
-                        bitness: {'""' if is_mobile else '"64"'},
-                        brands: [
-                            {{ brand: 'Chromium',      version: '{_chrome_ver}' }},
-                            {{ brand: 'Google Chrome', version: '{_chrome_ver}' }},
-                            {{ brand: 'Not=A?Brand',   version: '99'            }},
-                        ],
-                        fullVersionList: [
-                            {{ brand: 'Chromium',      version: '{_chrome_ver}.0.0.0' }},
-                            {{ brand: 'Google Chrome', version: '{_chrome_ver}.0.0.0' }},
-                            {{ brand: 'Not=A?Brand',   version: '99.0.0.0'            }},
-                        ],
+                // ── 5. userAgentData — cached object, correct brand order ──
+                (function() {{
+                    const _brands = [
+                        {{ brand: 'Not=A?Brand',   version: '99'           }},
+                        {{ brand: 'Chromium',      version: '{_chrome_ver}' }},
+                        {{ brand: 'Google Chrome', version: '{_chrome_ver}' }},
+                    ];
+                    const _uad = {{
+                        brands: _brands,
                         mobile: {'true' if is_mobile else 'false'},
-                        model: '{"" if not is_mobile else _model}',
                         platform: '{_ua_platform}',
-                        platformVersion: '{_ua_platform_ver}',
-                        uaFullVersion: '{_chrome_ver}.0.0.0',
-                        wow64: false,
-                    }}),
-                }})}});
+                        toJSON: () => ({{ brands: _brands, mobile: {'true' if is_mobile else 'false'}, platform: '{_ua_platform}' }}),
+                        getHighEntropyValues: (hints) => Promise.resolve({{
+                            architecture: {'""' if is_mobile else '"x86"'},
+                            bitness: {'""' if is_mobile else '"64"'},
+                            brands: _brands,
+                            fullVersionList: [
+                                {{ brand: 'Not=A?Brand',   version: '99.0.0.0'             }},
+                                {{ brand: 'Chromium',      version: '{_chrome_ver}.0.0.0'  }},
+                                {{ brand: 'Google Chrome', version: '{_chrome_ver}.0.0.0'  }},
+                            ],
+                            mobile: {'true' if is_mobile else 'false'},
+                            model: '{"" if not is_mobile else _model}',
+                            platform: '{_ua_platform}',
+                            platformVersion: '{_ua_platform_ver}',
+                            uaFullVersion: '{_chrome_ver}.0.0.0',
+                            wow64: false,
+                        }}),
+                    }};
+                    Object.defineProperty(navigator, 'userAgentData', {{ get: () => _uad }});
+                }})();
 
-                // --- touch support ---
+                // ── 6. touch ──
                 {'Object.defineProperty(navigator, "maxTouchPoints", { get: () => 5 });' if is_mobile else 'Object.defineProperty(navigator, "maxTouchPoints", { get: () => 0 });'}
                 {'window.ontouchstart = null;' if is_mobile else ''}
 
-                // --- language / locale ---
-                Object.defineProperty(navigator, 'languages', {{ get: () => ['{lang_primary}', '{lang_base}'] }});
+                // ── 7. language / locale ──
+                Object.defineProperty(navigator, 'languages', {{ get: () => {json.dumps([t.split(';')[0] for t in accept_lang.split(',')])} }});
                 Object.defineProperty(navigator, 'language',  {{ get: () => '{lang_primary}' }});
 
-                // --- window geometry ---
-                Object.defineProperty(window, 'outerHeight', {{ get: () => window.innerHeight + 85 }});
-                Object.defineProperty(window, 'outerWidth',  {{ get: () => window.innerWidth  }});
-                Object.defineProperty(screen, 'width',       {{ get: () => {chosen_viewport['width']}  }});
-                Object.defineProperty(screen, 'height',      {{ get: () => {chosen_viewport['height']} }});
-                Object.defineProperty(screen, 'availWidth',  {{ get: () => {chosen_viewport['width']}  }});
-                Object.defineProperty(screen, 'availHeight', {{ get: () => {chosen_viewport['height']} }});
-                Object.defineProperty(screen, 'colorDepth',  {{ get: () => 24 }});
-                Object.defineProperty(screen, 'pixelDepth',  {{ get: () => 24 }});
+                // ── 8. misc navigator ──
+                Object.defineProperty(navigator, 'vendor',        {{ get: () => 'Google Inc.' }});
+                Object.defineProperty(navigator, 'doNotTrack',    {{ get: () => null }});
+                Object.defineProperty(navigator, 'cookieEnabled', {{ get: () => true }});
+                Object.defineProperty(navigator, 'appName',       {{ get: () => 'Netscape' }});
+                Object.defineProperty(navigator, 'appVersion',    {{ get: () => '{_app_version}' }});
+                Object.defineProperty(navigator, 'product',       {{ get: () => 'Gecko' }});
+                Object.defineProperty(navigator, 'productSub',    {{ get: () => '20030107' }});
 
-                // --- hardware ---
+                // ── 9. window geometry ──
+                const _toolbarH = {toolbar_height};
+                Object.defineProperty(window,  'outerHeight', {{ get: () => window.innerHeight + _toolbarH }});
+                Object.defineProperty(window,  'outerWidth',  {{ get: () => window.innerWidth }});
+                Object.defineProperty(screen,  'width',       {{ get: () => {chosen_viewport['width']}  }});
+                Object.defineProperty(screen,  'height',      {{ get: () => {chosen_viewport['height']} }});
+                Object.defineProperty(screen,  'availWidth',  {{ get: () => {chosen_viewport['width']}  }});
+                Object.defineProperty(screen,  'availHeight', {{ get: () => {chosen_viewport['height']} }});
+                Object.defineProperty(screen,  'availTop',    {{ get: () => 0 }});
+                Object.defineProperty(screen,  'availLeft',   {{ get: () => 0 }});
+                Object.defineProperty(screen,  'colorDepth',  {{ get: () => 24 }});
+                Object.defineProperty(screen,  'pixelDepth',  {{ get: () => 24 }});
+                Object.defineProperty(screen,  'orientation', {{ get: () => ({{
+                    type: '{chosen_viewport['width'] > chosen_viewport['height'] and 'landscape-primary' or 'portrait-primary'}',
+                    angle: 0, addEventListener: () => {{}}, removeEventListener: () => {{}}
+                }}) }});
+                Object.defineProperty(window, 'devicePixelRatio', {{ get: () => {dpr} }});
+
+                // ── 10. hardware ──
                 Object.defineProperty(navigator, 'hardwareConcurrency', {{ get: () => {hw_concurrency} }});
                 Object.defineProperty(navigator, 'deviceMemory',        {{ get: () => {device_memory}  }});
 
-                // --- canvas noise (pixel-level) ---
-                const _toDataURL = HTMLCanvasElement.prototype.toDataURL;
-                HTMLCanvasElement.prototype.toDataURL = function(...args) {{
-                    const ctx = this.getContext('2d');
-                    if (ctx) {{
-                        const img = ctx.getImageData(0, 0, this.width || 1, this.height || 1);
-                        img.data[0] = img.data[0] ^ {canvas_salt};
-                        ctx.putImageData(img, 0, 0);
+                // ── 11. canvas noise — single _orig reference, no double-noise ──
+                (function() {{
+                    const SALT = {canvas_salt};
+                    const _orig2d = CanvasRenderingContext2D.prototype.getImageData;
+
+                    function _noise(data) {{
+                        for (let i = 0; i < data.length; i += 4) {{
+                            data[i]     ^= SALT;
+                            data[i + 1] ^= (SALT * 3) & 0xff;
+                            data[i + 2] ^= (SALT * 7) & 0xff;
+                        }}
                     }}
-                    return _toDataURL.apply(this, args);
-                }};
-                const _getImageData = CanvasRenderingContext2D.prototype.getImageData;
-                CanvasRenderingContext2D.prototype.getImageData = function(...args) {{
-                    const data = _getImageData.apply(this, args);
-                    for (let i = 0; i < data.data.length; i += 100) {{
-                        data.data[i] = data.data[i] ^ {canvas_salt};
+
+                    CanvasRenderingContext2D.prototype.getImageData = __nativeReg(function(...a) {{
+                        const d = _orig2d.apply(this, a);
+                        _noise(d.data);
+                        return d;
+                    }}, 'getImageData');
+
+                    const _origURL  = HTMLCanvasElement.prototype.toDataURL;
+                    const _origBlob = HTMLCanvasElement.prototype.toBlob;
+
+                    function _applyNoise(canvas) {{
+                        const ctx = canvas.getContext('2d');
+                        if (ctx && canvas.width && canvas.height) {{
+                            const img = _orig2d.call(ctx, 0, 0, canvas.width, canvas.height);
+                            _noise(img.data);
+                            ctx.putImageData(img, 0, 0);
+                        }}
                     }}
-                    return data;
-                }};
 
-                // --- WebGL ---
-                const _getParam = WebGLRenderingContext.prototype.getParameter;
-                WebGLRenderingContext.prototype.getParameter = function(p) {{
-                    if (p === 37445) return '{webgl_vendor}';
-                    if (p === 37446) return '{webgl_renderer}';
-                    return _getParam.call(this, p);
-                }};
-                const _getParam2 = WebGL2RenderingContext.prototype.getParameter;
-                WebGL2RenderingContext.prototype.getParameter = function(p) {{
-                    if (p === 37445) return '{webgl_vendor}';
-                    if (p === 37446) return '{webgl_renderer}';
-                    return _getParam2.call(this, p);
-                }};
+                    HTMLCanvasElement.prototype.toDataURL = __nativeReg(function(...a) {{
+                        _applyNoise(this);
+                        return _origURL.apply(this, a);
+                    }}, 'toDataURL');
 
-                // --- AudioContext noise ---
-                const _createAnalyser = AudioContext.prototype.createAnalyser;
-                AudioContext.prototype.createAnalyser = function() {{
-                    const analyser = _createAnalyser.call(this);
-                    const _getFloatFreq = analyser.getFloatFrequencyData.bind(analyser);
-                    analyser.getFloatFrequencyData = function(arr) {{
-                        _getFloatFreq(arr);
-                        for (let i = 0; i < arr.length; i++) arr[i] += (Math.random() - 0.5) * {audio_salt};
-                    }};
-                    return analyser;
-                }};
+                    HTMLCanvasElement.prototype.toBlob = __nativeReg(function(cb, ...a) {{
+                        _applyNoise(this);
+                        return _origBlob.call(this, cb, ...a);
+                    }}, 'toBlob');
 
-                // --- Timezone offset (DST-aware via real API) ---
-                const _origGetTZOffset = Date.prototype.getTimezoneOffset;
-                Date.prototype.getTimezoneOffset = function() {{
-                    const jan = new Date(this.getFullYear(), 0, 1).getTime();
-                    const jul = new Date(this.getFullYear(), 6, 1).getTime();
-                    const stdOffset = {tz_offset};
-                    const dstOffset = stdOffset - 60;
-                    const isDST = this.getTime() < Math.max(jan, jul) && this.getTime() > Math.min(jan, jul);
-                    return isDST ? dstOffset : stdOffset;
-                }};
+                    if (typeof OffscreenCanvasRenderingContext2D !== 'undefined') {{
+                        const _origOff = OffscreenCanvasRenderingContext2D.prototype.getImageData;
+                        OffscreenCanvasRenderingContext2D.prototype.getImageData = __nativeReg(function(...a) {{
+                            const d = _origOff.apply(this, a);
+                            _noise(d.data);
+                            return d;
+                        }}, 'getImageData');
+                    }}
+                }})();
 
-                // --- Battery ---
+                // ── 12. WebGL — vendor/renderer + extra params + readPixels noise ──
+                (function() {{
+                    const V = '{webgl_vendor}', R = '{webgl_renderer}', S = {canvas_salt};
+                    function _patch(proto) {{
+                        const _gp = proto.getParameter;
+                        proto.getParameter = __nativeReg(function(p) {{
+                            if (p === 37445) return V;   // UNMASKED_VENDOR_WEBGL
+                            if (p === 37446) return R;   // UNMASKED_RENDERER_WEBGL
+                            if (p === 7937)  return R;   // RENDERER (same as unmasked)
+                            if (p === 7936)  return V;   // VENDOR
+                            if (p === 3379)  return 16384;  // MAX_TEXTURE_SIZE
+                            if (p === 34076) return 16384;  // MAX_CUBE_MAP_TEXTURE_SIZE
+                            if (p === 3386)  return new Int32Array([16384, 16384]); // MAX_VIEWPORT_DIMS
+                            if (p === 33902) return new Float32Array([1, 1]);       // ALIASED_LINE_WIDTH_RANGE
+                            if (p === 33901) return new Float32Array([1, 1024]);    // ALIASED_POINT_SIZE_RANGE
+                            return _gp.call(this, p);
+                        }}, 'getParameter');
+                        const _rp = proto.readPixels;
+                        proto.readPixels = __nativeReg(function(...a) {{
+                            _rp.apply(this, a);
+                            const buf = a[6];
+                            if (buf instanceof Uint8Array && buf.length >= 4) {{
+                                // noise full first pixel (RGBA)
+                                buf[0] ^= S;
+                                buf[1] ^= (S * 3) & 0xff;
+                                buf[2] ^= (S * 7) & 0xff;
+                                buf[3] ^= (S * 5) & 0xff;
+                            }}
+                        }}, 'readPixels');
+                        const _gse = proto.getSupportedExtensions;
+                        proto.getSupportedExtensions = __nativeReg(function() {{
+                            const exts = _gse.call(this) || [];
+                            return exts.filter(e => !e.includes('debug') && !e.includes('WEBGL_debug'));
+                        }}, 'getSupportedExtensions');
+                    }}
+                    _patch(WebGLRenderingContext.prototype);
+                    _patch(WebGL2RenderingContext.prototype);
+                }})();
+
+                // ── 13. AudioContext — noise OfflineAudioContext (actual fingerprint vector) ──
+                (function() {{
+                    const ASALT = {audio_salt};
+                    const _origStart = OfflineAudioContext.prototype.startRendering;
+                    OfflineAudioContext.prototype.startRendering = __nativeReg(function() {{
+                        return _origStart.call(this).then(buf => {{
+                            const ch = buf.getChannelData(0);
+                            for (let i = 0; i < ch.length; i++) ch[i] += (Math.random() - 0.5) * ASALT;
+                            return buf;
+                        }});
+                    }}, 'startRendering');
+                    const _origGCD = AudioBuffer.prototype.getChannelData;
+                    AudioBuffer.prototype.getChannelData = __nativeReg(function(ch) {{
+                        const data = _origGCD.call(this, ch);
+                        if (ch === 0) data[0] += ASALT * 0.0001;
+                        return data;
+                    }}, 'getChannelData');
+                }})();
+
+                // ── 14. Battery ──
                 navigator.getBattery = () => Promise.resolve({{
                     charging: {battery_charging}, level: {battery_level},
                     chargingTime: 0, dischargingTime: Infinity,
                     addEventListener: () => {{}}
                 }});
 
-                // --- Network ---
-                Object.defineProperty(navigator, 'connection', {{ get: () => ({{
-                    effectiveType: '4g', rtt: {rtt}, downlink: {downlink}, saveData: false,
-                    addEventListener: () => {{}}
-                }})}});
+                // ── 15. Network — cached, with all fields ──
+                (function() {{
+                    const _conn = {{
+                        type: 'wifi', effectiveType: '4g',
+                        rtt: {rtt}, downlink: {downlink}, downlinkMax: Infinity,
+                        saveData: false, onchange: null,
+                        addEventListener: () => {{}}, removeEventListener: () => {{}}
+                    }};
+                    Object.defineProperty(navigator, 'connection', {{ get: () => _conn }});
+                }})();
 
-                // --- Permissions ---
-                const _permQuery = navigator.permissions.query.bind(navigator.permissions);
-                navigator.permissions.query = (p) =>
-                    p.name === 'notifications'
-                        ? Promise.resolve({{ state: 'default' }})
-                        : _permQuery(p);
+                // ── 16. Permissions ──
+                (function() {{
+                    const _pq = navigator.permissions.query.bind(navigator.permissions);
+                    navigator.permissions.query = __nativeReg(function(p) {{
+                        if (p.name === 'notifications') return Promise.resolve({{ state: 'default' }});
+                        if (p.name === 'geolocation')   return Promise.resolve({{ state: 'prompt'  }});
+                        if (p.name === 'camera')        return Promise.resolve({{ state: 'prompt'  }});
+                        if (p.name === 'microphone')    return Promise.resolve({{ state: 'prompt'  }});
+                        return _pq(p);
+                    }}, 'query');
+                }})();
 
-                // --- Speech synthesis ---
-                Object.defineProperty(speechSynthesis, 'getVoices', {{ get: () => () => [] }});
+                // ── 17. speechSynthesis — locale-matched voices ──
+                (function() {{
+                    const _voices = [
+                        {{ voiceURI: 'Google {lang_primary}', name: 'Google {lang_primary}',
+                           lang: '{lang_primary}', localService: false, default: true }},
+                        {{ voiceURI: 'Google {lang_base}',    name: 'Google {lang_base}',
+                           lang: '{lang_base}',    localService: false, default: false }},
+                    ];
+                    speechSynthesis.getVoices = () => _voices;
+                    window.addEventListener('voiceschanged', () => {{}}, {{ once: true }});
+                }})();
 
-                // --- Media devices ---
-                if (navigator.mediaDevices) {{
-                    navigator.mediaDevices.enumerateDevices = () => Promise.resolve([
-                        {{ kind: 'audioinput',  label: '', deviceId: 'default', groupId: 'default' }},
-                        {{ kind: 'audiooutput', label: '', deviceId: 'default', groupId: 'default' }},
-                        {{ kind: 'videoinput',  label: '', deviceId: 'default', groupId: 'default' }},
-                    ]);
-                }}
+                // ── 18. mediaDevices — random hex deviceIds ──
+                (function() {{
+                    function _rnd() {{ return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(16).slice(2).padEnd(36,'0'); }}
+                    const _devs = [
+                        {{ kind: 'audioinput',  label: '', deviceId: _rnd(), groupId: _rnd() }},
+                        {{ kind: 'audiooutput', label: '', deviceId: _rnd(), groupId: _rnd() }},
+                        {{ kind: 'videoinput',  label: '', deviceId: _rnd(), groupId: _rnd() }},
+                    ];
+                    if (navigator.mediaDevices)
+                        navigator.mediaDevices.enumerateDevices = __nativeReg(
+                            () => Promise.resolve(_devs), 'enumerateDevices'
+                        );
+                }})();
+
+                // ── 19. Error.stackTraceLimit (V8 signal) ──
+                Error.stackTraceLimit = 10;
+
+                // ── 20. Notification ──
+                if (typeof Notification !== 'undefined')
+                    Object.defineProperty(Notification, 'permission', {{ get: () => 'default' }});
+
+                // ── 21. performance.now() jitter — defeat timing fingerprint ──
+                (function() {{
+                    const _origNow = performance.now.bind(performance);
+                    performance.now = __nativeReg(function() {{
+                        return _origNow() + (Math.random() - 0.5) * 0.1;
+                    }}, 'now');
+                }})();
+
+                // ── 22. history.length — simulate real user ──
+                (function() {{
+                    const _fakeLen = Math.floor(Math.random() * 8) + 2;
+                    try {{ Object.defineProperty(history, 'length', {{ get: () => _fakeLen }}); }} catch(e) {{}}
+                }})();
+
+                // ── 23. iframe contentWindow isolation — patch Navigator prototype ──
+                (function() {{
+                    // Re-apply webdriver deletion on every new document via MutationObserver
+                    // and patch iframes as they are inserted
+                    const _origCreateElement = document.createElement.bind(document);
+                    document.createElement = __nativeReg(function(tag, ...a) {{
+                        const el = _origCreateElement(tag, ...a);
+                        if (tag.toLowerCase() === 'iframe') {{
+                            el.addEventListener('load', () => {{
+                                try {{
+                                    const w = el.contentWindow;
+                                    if (w && w.navigator)
+                                        delete Object.getPrototypeOf(w.navigator).webdriver;
+                                }} catch(e) {{}}
+                            }});
+                        }}
+                        return el;
+                    }}, 'createElement');
+                }})();
+
+                // ── 24. window.name persistence simulation ──
+                if (!window.name) window.name = '';
+
+                // ── 25. Cleanup __nativeReg helper (don't expose it) ──
+                delete window.__nativeReg;
             """)
+
+            def _bezier_move(pg, x1, y1, x2, y2, steps=None):
+                """Move mouse along a quadratic Bézier curve with random control point."""
+                steps = steps or random.randint(18, 35)
+                cx_ = random.uniform(min(x1, x2), max(x1, x2))
+                cy_ = random.uniform(min(y1, y2) - 80, max(y1, y2) + 80)
+                for i in range(1, steps + 1):
+                    t = i / steps
+                    mx = (1-t)**2 * x1 + 2*(1-t)*t * cx_ + t**2 * x2
+                    my = (1-t)**2 * y1 + 2*(1-t)*t * cy_ + t**2 * y2
+                    pg.mouse.move(mx, my)
+                    time.sleep(random.uniform(0.005, 0.018))
 
             page.goto(f"https://mohmal.eu.org/?{EMAIL}", wait_until="domcontentloaded", timeout=60000)
             time.sleep(3)
@@ -727,7 +899,7 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
                     if bb:
                         cx = bb["x"] + bb["width"]  * random.uniform(0.3, 0.7)
                         cy = bb["y"] + bb["height"] * random.uniform(0.3, 0.7)
-                        page.mouse.move(cx, cy, steps=random.randint(8, 20))
+                        _bezier_move(page, cx - random.randint(50,150), cy - random.randint(20,80), cx, cy)
                         dwell = random.uniform(3.0, 7.0)
                         _print(f"   👁  [{ad['network']}] #{ad['data_aa'] or 'n/a'} — dwell {dwell:.1f}s")
                         time.sleep(dwell)
@@ -752,6 +924,7 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
 
                 if ad_frame:
                     ad["loaded"] = True
+                    ad["_frame"] = ad_frame
                     for sel in ["a", ".aa-title", ".aa-description", "h1,h2,h3", "p", "body"]:
                         try:
                             el_f = ad_frame.locator(sel).first
@@ -773,63 +946,116 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
                 if ad["click_url"]:
                     _print(f"      Link : {ad['click_url'][:80]}")
 
-            # ── 4. CLICK — all loaded ads, catch new tab per ad ──────────
+            # ── 4. CLICK — click via frame context, handle same-tab nav ──────────
             _print("\n── 4. CLICK ──────────────────────────────────────────")
             clickable = [a for a in detected_ads if a["loaded"]]
             if not clickable:
                 _print("   ⏭  No loaded ads to click")
             for target in clickable:
                 try:
+                    # scroll away briefly then back — mimics real user behaviour
+                    page.mouse.wheel(0, random.randint(200, 500))
+                    time.sleep(random.uniform(0.8, 1.5))
+                    page.mouse.wheel(0, -random.randint(200, 500))
+                    time.sleep(random.uniform(0.5, 1.0))
+
                     selector = f"iframe[data-aa='{target['data_aa']}']" if target["data_aa"] \
                                else f"iframe[src*='{target['src'].lstrip('/').split('?')[0][:40]}']"
                     el = page.locator(selector).first
                     el.scroll_into_view_if_needed(timeout=5000)
                     time.sleep(random.uniform(1.0, 2.5))
+
                     bb = el.bounding_box()
                     if not bb:
                         _print(f"   ⚠  No bounding box for #{target['data_aa'] or 'n/a'}")
                         continue
+
+                    # Bézier approach from current mouse pos
                     cx = bb["x"] + bb["width"]  * random.uniform(0.3, 0.7)
                     cy = bb["y"] + bb["height"] * random.uniform(0.3, 0.7)
-                    page.mouse.move(cx, cy, steps=random.randint(10, 25))
-                    time.sleep(random.uniform(0.3, 0.8))
+                    cur_x = bb["x"] + random.randint(-100, -30)
+                    cur_y = bb["y"] + random.randint(-60, -10)
+                    _bezier_move(page, cur_x, cur_y, cx, cy)
+                    time.sleep(random.uniform(0.2, 0.6))
 
-                    try:
-                        with context.expect_page(timeout=8000) as new_tab_info:
-                            page.mouse.click(cx, cy)
-                        new_tab = new_tab_info.value
-                    except Exception:
-                        # ad may navigate in same tab or open no new tab — still counts as a click
-                        _print(f"   🖱  Clicked ad #{target['data_aa'] or 'n/a'} [{target['network']}] (no new tab)")
-                        time.sleep(random.uniform(3.0, 6.0))
-                        continue
+                    # click via the frame's <a> element — not the outer iframe bbox
+                    clicked_via_frame = False
+                    if target.get("_frame"):
+                        try:
+                            a_el = target["_frame"].locator("a").first
+                            prev_url = page.url
+                            try:
+                                with context.expect_page(timeout=6000) as nti:
+                                    a_el.click(timeout=4000)
+                                new_tab = nti.value
+                            except Exception:
+                                # same-tab navigation or no nav
+                                new_tab = None
+                                if page.url != prev_url:
+                                    _print(f"   🖱  Clicked (same-tab nav) #{target['data_aa'] or 'n/a'} [{target['network']}]")
+                                    time.sleep(random.uniform(4.0, 8.0))
+                                    page.go_back(wait_until="domcontentloaded", timeout=10000)
+                                else:
+                                    _print(f"   🖱  Clicked (no nav) #{target['data_aa'] or 'n/a'} [{target['network']}]")
+                                    time.sleep(random.uniform(2.0, 4.0))
+                                clicked_via_frame = True
+                            if new_tab:
+                                clicked_via_frame = True
+                        except Exception:
+                            pass
 
-                    _print(f"   🖱  Clicked ad #{target['data_aa'] or 'n/a'} [{target['network']}]")
-                    try:
-                        new_tab.wait_for_load_state("domcontentloaded", timeout=15000)
-                    except Exception:
-                        pass
+                    if not clicked_via_frame:
+                        # fallback: raw mouse click on iframe bbox
+                        prev_url = page.url
+                        try:
+                            with context.expect_page(timeout=8000) as nti:
+                                page.mouse.click(cx, cy)
+                            new_tab = nti.value
+                        except Exception:
+                            new_tab = None
+                            if page.url != prev_url:
+                                _print(f"   🖱  Clicked (same-tab nav) #{target['data_aa'] or 'n/a'} [{target['network']}]")
+                                time.sleep(random.uniform(4.0, 8.0))
+                                page.go_back(wait_until="domcontentloaded", timeout=10000)
+                            else:
+                                _print(f"   🖱  Clicked (no nav) #{target['data_aa'] or 'n/a'} [{target['network']}]")
+                                time.sleep(random.uniform(2.0, 4.0))
+                            continue
 
-                    tab_url   = new_tab.url
-                    tab_title = "<unknown>"
-                    tab_text  = "<none>"
-                    try: tab_title = new_tab.title()
-                    except Exception: pass
-                    try: tab_text = new_tab.locator("h1, h2, h3, p").first.inner_text(timeout=3000).strip()[:200]
-                    except Exception: pass
+                    if new_tab:
+                        _print(f"   🖱  Clicked ad #{target['data_aa'] or 'n/a'} [{target['network']}]")
+                        try:
+                            new_tab.wait_for_load_state("domcontentloaded", timeout=15000)
+                        except Exception:
+                            pass
 
-                    _print(f"   🆕 New tab:")
-                    _print(f"      URL   : {tab_url[:100]}")
-                    _print(f"      Title : {tab_title}")
-                    _print(f"      Text  : {tab_text}")
-                    target["landing_url"]   = tab_url
-                    target["landing_title"] = tab_title
-                    target["landing_text"]  = tab_text
-                    dwell = random.uniform(5.0, 12.0)
-                    _print(f"   ⏱  Dwelling {dwell:.1f}s...")
-                    time.sleep(dwell)
-                    new_tab.close()
-                    _print("   ✅ Tab closed")
+                        tab_url   = new_tab.url
+                        tab_title = "<unknown>"
+                        tab_text  = "<none>"
+                        try: tab_title = new_tab.title()
+                        except Exception: pass
+                        try: tab_text = new_tab.locator("h1, h2, h3, p").first.inner_text(timeout=3000).strip()[:200]
+                        except Exception: pass
+
+                        _print(f"   🆕 New tab:")
+                        _print(f"      URL   : {tab_url[:100]}")
+                        _print(f"      Title : {tab_title}")
+                        _print(f"      Text  : {tab_text}")
+                        target["landing_url"]   = tab_url
+                        target["landing_title"] = tab_title
+                        target["landing_text"]  = tab_text
+
+                        # scroll landing page during dwell — mimics reading
+                        dwell = random.uniform(5.0, 12.0)
+                        _print(f"   ⏱  Dwelling {dwell:.1f}s...")
+                        half = dwell / 2
+                        time.sleep(half)
+                        try: new_tab.mouse.wheel(0, random.randint(300, 700))
+                        except Exception: pass
+                        time.sleep(dwell - half)
+                        new_tab.close()
+                        _print("   ✅ Tab closed")
+
                 except Exception as e:
                     _print(f"   ⚠  Click failed for #{target['data_aa'] or 'n/a'}: {e}")
 
@@ -878,5 +1104,8 @@ if _args.proxy:
 
 name, email_addr = generate_identity()
 session_id = _args.socks_port
-with Xvfb(width=1920, height=1080, colordepth=24):
+if _args.debug:
     run_session(elements={"email": email_addr, "name": name}, session_id=session_id, proxy_config=proxy_config)
+else:
+    with Xvfb(width=1920, height=1080, colordepth=24):
+        run_session(elements={"email": email_addr, "name": name}, session_id=session_id, proxy_config=proxy_config)
