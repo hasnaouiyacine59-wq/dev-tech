@@ -366,7 +366,8 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
             ],
             ignore_default_args=["--enable-automation"],
         )
-        launch_kwargs["channel"] = "chrome"
+        if os.path.exists("/usr/bin/google-chrome"):
+            launch_kwargs["channel"] = "chrome"
 
         context = browser_type.launch_persistent_context(session_profile, **launch_kwargs)
         try:
