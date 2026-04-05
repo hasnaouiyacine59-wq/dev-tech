@@ -1,4 +1,4 @@
-VERSION = "3.0.0"
+VERSION = "4.0.0"
 
 import random, os, string, sys, json
 import argparse
@@ -821,7 +821,154 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
                 // ── 24. window.name persistence simulation ──
                 if (!window.name) window.name = '';
 
-                // ── 25. Cleanup __nativeReg helper (don't expose it) ──
+                // ── 25. Intl consistency — timeZone + locale must match context ──
+                (function() {{
+                    const _origDTF = Intl.DateTimeFormat;
+                    Intl.DateTimeFormat = __nativeReg(function(loc, opts) {{
+                        opts = opts || {{}};
+                        if (!opts.timeZone) opts.timeZone = '{chosen_tz}';
+                        return new _origDTF(loc || '{lang_primary}', opts);
+                    }}, 'DateTimeFormat');
+                    Intl.DateTimeFormat.prototype = _origDTF.prototype;
+                    Intl.DateTimeFormat.supportedLocalesOf = _origDTF.supportedLocalesOf.bind(_origDTF);
+                }})();
+
+                // ── 26. RTCPeerConnection — block local IP leak ──
+                (function() {{
+                    const _origRTC = window.RTCPeerConnection;
+                    if (!_origRTC) return;
+                    window.RTCPeerConnection = __nativeReg(function(cfg, ...a) {{
+                        cfg = cfg || {{}};
+                        // force TURN-only to prevent local candidate gathering
+                        cfg.iceTransportPolicy = 'relay';
+                        const pc = new _origRTC(cfg, ...a);
+                        const _origGLC = pc.createOffer.bind(pc);
+                        return pc;
+                    }}, 'RTCPeerConnection');
+                    window.RTCPeerConnection.prototype = _origRTC.prototype;
+                }})();
+
+                // ── 27. IntersectionObserver — realistic async callbacks ──
+                (function() {{
+                    const _origIO = window.IntersectionObserver;
+                    window.IntersectionObserver = __nativeReg(function(cb, opts) {{
+                        const _io = new _origIO((entries, obs) => {{
+                            // add small random delay to mimic real layout engine
+                            setTimeout(() => cb(entries, obs), Math.random() * 50 + 10);
+                        }}, opts);
+                        return _io;
+                    }}, 'IntersectionObserver');
+                    window.IntersectionObserver.prototype = _origIO.prototype;
+                }})();
+
+                // ── 28. visualViewport ──
+                (function() {{
+                    if (!window.visualViewport) return;
+                    const _vvp = window.visualViewport;
+                    Object.defineProperty(_vvp, 'scale',        {{ get: () => 1.0 }});
+                    Object.defineProperty(_vvp, 'offsetLeft',   {{ get: () => 0   }});
+                    Object.defineProperty(_vvp, 'offsetTop',    {{ get: () => 0   }});
+                    Object.defineProperty(_vvp, 'pageLeft',     {{ get: () => 0   }});
+                    Object.defineProperty(_vvp, 'pageTop',      {{ get: () => 0   }});
+                    Object.defineProperty(_vvp, 'width',        {{ get: () => window.innerWidth  }});
+                    Object.defineProperty(_vvp, 'height',       {{ get: () => window.innerHeight }});
+                }})();
+
+                // ── 29. CSS APIs — signal real Chrome ──
+                if (typeof CSS === 'undefined') window.CSS = {{}};
+                if (!CSS.supports) CSS.supports = __nativeReg(function(p, v) {{
+                    return true; // conservative — real Chrome supports most things
+                }}, 'supports');
+                if (!CSS.escape) CSS.escape = __nativeReg(function(s) {{
+                    return s.replace(/([^\w-])/g, '\\\\$1');
+                }}, 'escape');
+
+                // ── 30. Chrome-specific globals ──
+                if (typeof trustedTypes === 'undefined') {{
+                    window.trustedTypes = {{
+                        createPolicy: (name, rules) => ({{
+                            createHTML:     (s) => s,
+                            createScript:   (s) => s,
+                            createScriptURL:(s) => s,
+                        }}),
+                        isHTML: () => false, isScript: () => false,
+                        isScriptURL: () => false, getAttributeType: () => null,
+                        getPropertyType: () => null, defaultPolicy: null,
+                        emptyHTML: '', emptyScript: '',
+                    }};
+                }}
+                // navigator.scheduling (Chrome 94+)
+                if (!navigator.scheduling) {{
+                    Object.defineProperty(navigator, 'scheduling', {{
+                        get: () => ({{ isInputPending: () => false }})
+                    }});
+                }}
+                // navigator.ink (Chrome 94+)
+                if (!navigator.ink) {{
+                    Object.defineProperty(navigator, 'ink', {{
+                        get: () => ({{ requestPresenter: () => Promise.resolve({{
+                            updateInkTrailStartPoint: () => {{}}
+                        }}) }})
+                    }});
+                }}
+                // navigator.locks
+                if (!navigator.locks) {{
+                    Object.defineProperty(navigator, 'locks', {{
+                        get: () => ({{ request: () => Promise.resolve(), query: () => Promise.resolve({{held:[],pending:[]}}) }})
+                    }});
+                }}
+                // navigator.keyboard
+                if (!navigator.keyboard) {{
+                    Object.defineProperty(navigator, 'keyboard', {{
+                        get: () => ({{ getLayoutMap: () => Promise.resolve(new Map()), lock: () => Promise.resolve(), unlock: () => {{}} }})
+                    }});
+                }}
+
+                // ── 31. SharedArrayBuffer / crossOriginIsolated consistency ──
+                try {{
+                    Object.defineProperty(window, 'crossOriginIsolated', {{ get: () => false }});
+                }} catch(e) {{}}
+
+                // ── 32. Object.getOwnPropertyDescriptor hardening ──
+                // Detectors call this on navigator to check if getter is native
+                (function() {{
+                    const _origGOPD = Object.getOwnPropertyDescriptor;
+                    Object.getOwnPropertyDescriptor = __nativeReg(function(obj, prop) {{
+                        const desc = _origGOPD(obj, prop);
+                        if (desc && typeof desc.get === 'function') {{
+                            // make the getter's toString look native
+                            const _g = desc.get;
+                            if (!_g.toString().includes('[native code]')) {{
+                                try {{
+                                    Object.defineProperty(_g, Symbol.toStringTag, {{ value: 'function' }});
+                                }} catch(e) {{}}
+                            }}
+                        }}
+                        return desc;
+                    }}, 'getOwnPropertyDescriptor');
+                }})();
+
+                // ── 33. Font enumeration hardening ──
+                (function() {{
+                    if (!document.fonts) return;
+                    const _origCheck = document.fonts.check.bind(document.fonts);
+                    // common fonts that should exist on the spoofed OS
+                    const _knownFonts = {json.dumps(
+                        ['Arial', 'Arial Black', 'Comic Sans MS', 'Courier New', 'Georgia',
+                         'Impact', 'Times New Roman', 'Trebuchet MS', 'Verdana', 'Tahoma',
+                         'Segoe UI', 'Calibri', 'Cambria'] if 'Windows' in chrome_ua else
+                        ['Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'Georgia',
+                         'Verdana', 'Trebuchet MS', 'Arial Black', 'Impact',
+                         'Helvetica Neue', 'San Francisco', 'Menlo']
+                    )};
+                    document.fonts.check = __nativeReg(function(font, text) {{
+                        const name = font.replace(/^[\\d.]+px\\s+/, '').replace(/['"]/g, '');
+                        if (_knownFonts.some(f => name.includes(f))) return true;
+                        return _origCheck(font, text);
+                    }}, 'check');
+                }})();
+
+                // ── 34. Cleanup __nativeReg helper (don't expose it) ──
                 delete window.__nativeReg;
             """)
 
