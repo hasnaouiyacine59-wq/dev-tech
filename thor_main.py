@@ -13,7 +13,7 @@ from xvfbwrapper import Xvfb
 BASE_DIR        = os.path.dirname(os.path.abspath(__file__))
 PROXY_FILE      = os.path.join(BASE_DIR, "proxies.txt")
 USED_PROXY_FILE = os.path.join(BASE_DIR, "used_proxies.txt")
-LOG_FILE        = os.path.expanduser("~/logs/ip_log.txt")
+LOG_FILE        = os.path.join(BASE_DIR, "ip_log.txt")
 REQUEST_TIMEOUT = 15
 
 def _test_proxy(proxy: str, timeout: int) -> bool:
@@ -987,7 +987,7 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
             page.goto(f"https://mohmal.eu.org/?{EMAIL}", wait_until="domcontentloaded", timeout=60000)
             time.sleep(3)
 
-            AD_LOG_FILE = "/logs/ads_log.jsonl"
+            AD_LOG_FILE = os.path.join(BASE_DIR, "ads_log.jsonl")
             AD_NETWORKS = {
                 "a-ads.com": "A-ADS", "acceptable.a-ads.com": "A-ADS",
                 "googlesyndication.com": "Google AdSense",
