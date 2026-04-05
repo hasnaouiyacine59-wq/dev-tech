@@ -190,7 +190,7 @@ _parser.add_argument("--control-port",     type=int, default=int(os.environ.get(
 _parser.add_argument("--api-port",         type=int, default=int(os.environ.get("API_PORT", 5000)))
 _args, _ = _parser.parse_known_args()
 
-TOR_PROXY    = f"socks5h://127.0.0.1:{_args.socks_port}"
+TOR_PROXY    = f"socks5://127.0.0.1:{_args.socks_port}"
 CONTROL_PORT = _args.control_port
 API_BASE     = f"http://127.0.0.1:{_args.api_port}"
 
