@@ -773,11 +773,12 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
                 if ad["click_url"]:
                     _print(f"      Link : {ad['click_url'][:80]}")
 
-            # ── 4. CLICK — 1 random loaded ad, catch new tab ──────────────
+            # ── 4. CLICK — all loaded ads, catch new tab per ad ──────────
             _print("\n── 4. CLICK ──────────────────────────────────────────")
-            clickable = [a for a in detected_ads if a["loaded"] and a["text"] not in ("<empty>", "<frame not found>")]
-            if clickable and random.random() < 0.25:
-                target = random.choice(clickable)
+            clickable = [a for a in detected_ads if a["loaded"]]
+            if not clickable:
+                _print("   ⏭  No loaded ads to click")
+            for target in clickable:
                 try:
                     selector = f"iframe[data-aa='{target['data_aa']}']" if target["data_aa"] \
                                else f"iframe[src*='{target['src'].lstrip('/').split('?')[0][:40]}']"
@@ -785,46 +786,52 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
                     el.scroll_into_view_if_needed(timeout=5000)
                     time.sleep(random.uniform(1.0, 2.5))
                     bb = el.bounding_box()
-                    if bb:
-                        cx = bb["x"] + bb["width"]  * random.uniform(0.3, 0.7)
-                        cy = bb["y"] + bb["height"] * random.uniform(0.3, 0.7)
-                        page.mouse.move(cx, cy, steps=random.randint(10, 25))
-                        time.sleep(random.uniform(0.3, 0.8))
+                    if not bb:
+                        _print(f"   ⚠  No bounding box for #{target['data_aa'] or 'n/a'}")
+                        continue
+                    cx = bb["x"] + bb["width"]  * random.uniform(0.3, 0.7)
+                    cy = bb["y"] + bb["height"] * random.uniform(0.3, 0.7)
+                    page.mouse.move(cx, cy, steps=random.randint(10, 25))
+                    time.sleep(random.uniform(0.3, 0.8))
 
+                    try:
                         with context.expect_page(timeout=8000) as new_tab_info:
                             page.mouse.click(cx, cy)
-
                         new_tab = new_tab_info.value
-                        _print(f"   🖱  Clicked ad #{target['data_aa'] or 'n/a'} [{target['network']}]")
-                        try:
-                            new_tab.wait_for_load_state("domcontentloaded", timeout=15000)
-                        except Exception:
-                            pass
+                    except Exception:
+                        # ad may navigate in same tab or open no new tab — still counts as a click
+                        _print(f"   🖱  Clicked ad #{target['data_aa'] or 'n/a'} [{target['network']}] (no new tab)")
+                        time.sleep(random.uniform(3.0, 6.0))
+                        continue
 
-                        tab_url   = new_tab.url
-                        tab_title = "<unknown>"
-                        tab_text  = "<none>"
-                        try: tab_title = new_tab.title()
-                        except Exception: pass
-                        try: tab_text = new_tab.locator("h1, h2, h3, p").first.inner_text(timeout=3000).strip()[:200]
-                        except Exception: pass
+                    _print(f"   🖱  Clicked ad #{target['data_aa'] or 'n/a'} [{target['network']}]")
+                    try:
+                        new_tab.wait_for_load_state("domcontentloaded", timeout=15000)
+                    except Exception:
+                        pass
 
-                        _print(f"   🆕 New tab:")
-                        _print(f"      URL   : {tab_url[:100]}")
-                        _print(f"      Title : {tab_title}")
-                        _print(f"      Text  : {tab_text}")
-                        target["landing_url"]   = tab_url
-                        target["landing_title"] = tab_title
-                        target["landing_text"]  = tab_text
-                        dwell = random.uniform(5.0, 12.0)
-                        _print(f"   ⏱  Dwelling {dwell:.1f}s...")
-                        time.sleep(dwell)
-                        new_tab.close()
-                        _print("   ✅ Tab closed")
+                    tab_url   = new_tab.url
+                    tab_title = "<unknown>"
+                    tab_text  = "<none>"
+                    try: tab_title = new_tab.title()
+                    except Exception: pass
+                    try: tab_text = new_tab.locator("h1, h2, h3, p").first.inner_text(timeout=3000).strip()[:200]
+                    except Exception: pass
+
+                    _print(f"   🆕 New tab:")
+                    _print(f"      URL   : {tab_url[:100]}")
+                    _print(f"      Title : {tab_title}")
+                    _print(f"      Text  : {tab_text}")
+                    target["landing_url"]   = tab_url
+                    target["landing_title"] = tab_title
+                    target["landing_text"]  = tab_text
+                    dwell = random.uniform(5.0, 12.0)
+                    _print(f"   ⏱  Dwelling {dwell:.1f}s...")
+                    time.sleep(dwell)
+                    new_tab.close()
+                    _print("   ✅ Tab closed")
                 except Exception as e:
-                    _print(f"   ⚠  Click failed: {e}")
-            else:
-                _print("   ⏭  No click this session")
+                    _print(f"   ⚠  Click failed for #{target['data_aa'] or 'n/a'}: {e}")
 
             # ── single log write at end with all data ─────────────────────
             with open(AD_LOG_FILE, "a") as f:
