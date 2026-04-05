@@ -1,4 +1,4 @@
-VERSION = "5.0.0"
+VERSION = "6.0.0"
 
 import random, os, string, sys, json
 import argparse
