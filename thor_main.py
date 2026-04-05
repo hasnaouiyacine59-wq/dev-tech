@@ -1208,13 +1208,14 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
 
             # ── single log write at end with all data ─────────────────────
             with open(AD_LOG_FILE, "a") as f:
+                serializable_ads = [{k: v for k, v in ad.items() if k != "_frame"} for ad in detected_ads]
                 f.write(json.dumps({
-                    "ts":     time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "ts":      time.strftime("%Y-%m-%d %H:%M:%S"),
                     "session": session_id,
-                    "ip":     ip_info.get("ip"),
-                    "cc":     cc,
-                    "device": "mobile" if is_mobile else "desktop",
-                    "ads":    detected_ads,
+                    "ip":      ip_info.get("ip"),
+                    "cc":      cc,
+                    "device":  "mobile" if is_mobile else "desktop",
+                    "ads":     serializable_ads,
                 }) + "\n")
 
             _print("─────────────────────────────────────────────────────\n")
