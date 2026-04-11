@@ -8,7 +8,7 @@ if [ -d ".git" ]; then
 fi
 
 # Wait for tor-proxy to be ready
-echo "==> Waiting for Tor..."
+echo "==> Waiting for Tor...!!!!!!!!"
 until nc -z 127.0.0.1 "${SOCKS_PORT:-9050}" && nc -z 127.0.0.1 "${API_PORT:-5000}"; do
   sleep 5
 done
