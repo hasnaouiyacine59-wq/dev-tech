@@ -6,7 +6,7 @@ if [ -d ".git" ]; then
   echo "==> Pulling latest code..."
   git pull origin main || echo "git pull failed, continuing with existing code"
 fi
-
+echo "==> Tor...!!!!!!!!"
 export TOR_HOST=${TOR_HOST:-127.0.0.1}
 
 # Wait for tor-proxy to be ready
@@ -17,6 +17,7 @@ done
 
 # Run main script in a loop
 mkdir -p /logs
+echo "==> W...!!!!!!!!"
 while true; do
   python3 -u thor_main.py -T 2>&1 | tee -a /logs/sessions.log
   sleep 5
