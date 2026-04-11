@@ -7,7 +7,7 @@ if [ -d ".git" ]; then
   git pull origin main || echo "git pull failed, continuing with existing code"
 fi
 
-TOR_HOST=${TOR_HOST:-127.0.0.1}
+export TOR_HOST=${TOR_HOST:-127.0.0.1}
 
 # Wait for tor-proxy to be ready
 echo "==> Waiting for Tor...!!!!!!!!"
