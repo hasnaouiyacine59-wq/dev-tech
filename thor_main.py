@@ -190,9 +190,10 @@ _parser.add_argument("--control-port",     type=int, default=int(os.environ.get(
 _parser.add_argument("--api-port",         type=int, default=int(os.environ.get("API_PORT", 5000)))
 _args, _ = _parser.parse_known_args()
 
-TOR_PROXY    = f"socks5://127.0.0.1:{_args.socks_port}"
+_TOR_HOST    = os.environ.get("TOR_HOST", "127.0.0.1")
+TOR_PROXY    = f"socks5://{_TOR_HOST}:{_args.socks_port}"
 CONTROL_PORT = _args.control_port
-API_BASE     = f"http://127.0.0.1:{_args.api_port}"
+API_BASE     = f"http://{_TOR_HOST}:{_args.api_port}"
 
 def tor_reset_and_get_ip() -> str:
     # wait for bootstrap via API
