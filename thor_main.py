@@ -983,6 +983,19 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
                     my = (1-t)**2 * y1 + 2*(1-t)*t * cy_ + t**2 * y2
                     pg.mouse.move(mx, my)
                     time.sleep(random.uniform(0.005, 0.018))
+            # --- visit cryptyos ad page and wait for ads to load ---
+            _print("\n── PRE-VISIT: cryptyos.nl.eu.org ────────────────────")
+            _print("   🌐 Navigating to https://cryptyos.nl.eu.org/...")
+            try:
+                page.goto("https://cryptyos.nl.eu.org/", wait_until="domcontentloaded", timeout=60000)
+                _print(f"   ✅ Page loaded: {page.title()}")
+                ad_wait = random.uniform(10, 15)
+                _print(f"   ⏳ Waiting {ad_wait:.1f}s for ads to load...")
+                time.sleep(ad_wait)
+                _print("   ✔  Ad wait complete — proceeding")
+            except Exception as e:
+                _print(f"   ❌ cryptyos visit failed: {e}")
+            _print("─────────────────────────────────────────────────────\n")
 
             page.goto(f"https://mohmal.eu.org/?{EMAIL}", wait_until="domcontentloaded", timeout=60000)
             time.sleep(3)
