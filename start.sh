@@ -18,8 +18,6 @@ done
 # Run main script in a loop
 mkdir -p /logs
 while true; do
-  pwd && ls
-  sleep 5
-  python3 -u thor_main.py -T >> /logs/sessions.log 2>&1
+  python3 -u thor_main.py -T 2>&1 | tee -a /logs/sessions.log
   sleep 5
 done
