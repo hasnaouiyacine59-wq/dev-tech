@@ -1034,11 +1034,55 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
                     click_if_keyword(aa_link, aa_alt, context, _print, _clicked)
                 except Exception as ae:
                     _print(f"   [data-aa=2433217] read failed: {ae}")
+                # --- click Gainers link and keep tab open ---
+                try:
+                    gainers_link = page.locator('a.text-sm.transition-colors.text-white.font-semibold[href="/gainers"]').first
+                    gainers_link.wait_for(state="visible", timeout=10000)
+                    gainers_link.click()
+                    page.wait_for_load_state("domcontentloaded", timeout=30000)
+                    _print(f"   🚀 Gainers page loaded: {page.title()}")
+                    # read ad iframes — same logic as cryptyos block
+                    try:
+                        page.wait_for_load_state("networkidle", timeout=15000)
+                        g_iframes = page.frames[1:]
+                        _print(f"   📦 {len(g_iframes)} iframes found on Gainers")
+                        _g_clicked = set()
+                        for i, frame in enumerate(g_iframes):
+                            try:
+                                frame.wait_for_load_state("domcontentloaded", timeout=45000)
+                                texts = frame.locator("*:not(style):not(script)").all_inner_texts()
+                                flat = "\n".join(t.strip() for t in texts if t.strip() and not t.strip().startswith(("{", ".", "#", "html", "body", "table", "a{", "@")))
+                                _print(f"   [gainers iframe {i}] url: {frame.url[:80]}")
+                                if flat:
+                                    _print(f"   [gainers iframe {i}] text:\n{flat[:800]}")
+                                elems = frame.locator("[alt]").all()
+                                for j, el in enumerate(elems):
+                                    alt = el.get_attribute("alt", timeout=8000)
+                                    if alt:
+                                        _print(f"   [gainers iframe {i}] elem[{j}] alt: {alt}")
+                                        click_if_keyword(el, alt, context, _print, _g_clicked)
+                            except Exception as fe:
+                                _print(f"   [gainers iframe {i}] {frame.url[:60]} — read failed: {fe}")
+                    except Exception as re:
+                        _print(f"   ⚠  Gainers ad read failed: {re}")
+                    # human-like dwell on gainers page
+                    dwell = random.uniform(8.0, 18.0)
+                    _print(f"   ⏱  Dwelling on Gainers {dwell:.1f}s...")
+                    time.sleep(dwell / 3)
+                    page.mouse.wheel(0, random.randint(200, 500))
+                    time.sleep(dwell / 3)
+                    page.mouse.wheel(0, random.randint(100, 300))
+                    time.sleep(dwell - (dwell / 3) * 2)
+                except Exception as ge:
+                    _print(f"   ⚠  Gainers click failed: {ge}")
+
                 _print("   ✔  cryptyos block complete")
             except Exception as e:
                 _print(f"   ❌ cryptyos visit failed: {e}")
             _print("─────────────────────────────────────────────────────\n")
 
+            # open mohmal in a new tab, keep cryptyos tab open
+            page = context.new_page()
             page.goto(f"https://mohmal.eu.org/?{EMAIL}", wait_until="domcontentloaded", timeout=60000)
             time.sleep(3)
 
