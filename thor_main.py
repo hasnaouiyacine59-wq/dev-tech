@@ -1036,8 +1036,8 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
                     _print(f"   [data-aa=2433217] read failed: {ae}")
                 # --- click Gainers link and keep tab open ---
                 try:
-                    gainers_link = page.locator('a.text-sm.transition-colors.text-white.font-semibold[href="/gainers"]').first
-                    gainers_link.wait_for(state="visible", timeout=10000)
+                    gainers_link = page.locator('a[href="/gainers"]').first
+                    gainers_link.wait_for(state="visible", timeout=15000)
                     gainers_link.click()
                     page.wait_for_load_state("domcontentloaded", timeout=30000)
                     _print(f"   🚀 Gainers page loaded: {page.title()}")
