@@ -983,16 +983,58 @@ def run_session(elements: dict, session_id: int = 0, proxy_config: dict = None):
                     my = (1-t)**2 * y1 + 2*(1-t)*t * cy_ + t**2 * y2
                     pg.mouse.move(mx, my)
                     time.sleep(random.uniform(0.005, 0.018))
+            def noisy_scroll(pg, printer):
+                for _ in range(random.randint(3, 6)):
+                    pg.mouse.wheel(0, random.randint(200, 600))
+                    time.sleep(random.uniform(0.5, 1.5))
+                pg.mouse.wheel(0, -random.randint(300, 700))
+                time.sleep(random.uniform(0.5, 1.0))
+
+            AD_KEYWORDS = ["crypto", "bitcoin", "btc", "eth", "trade", "invest", "earn", "wallet", "defi", "nft", "coin", "exchange"]
+
+            def click_if_keyword(el, text, ctx, printer, clicked_set):
+                if any(kw in text.lower() for kw in AD_KEYWORDS):
+                    printer(f"   🔑 Keyword match: '{text[:80]}'")
+
             # --- visit cryptyos ad page and wait for ads to load ---
             _print("\n── PRE-VISIT: cryptyos.nl.eu.org ────────────────────")
             _print("   🌐 Navigating to https://cryptyos.nl.eu.org/...")
             try:
-                page.goto("https://cryptyos.nl.eu.org/", wait_until="domcontentloaded", timeout=60000)
+                page.goto("https://cryptyos.nl.eu.org/", wait_until="domcontentloaded", timeout=120000)
                 _print(f"   ✅ Page loaded: {page.title()}")
-                ad_wait = random.uniform(10, 15)
-                _print(f"   ⏳ Waiting {ad_wait:.1f}s for ads to load...")
-                time.sleep(ad_wait)
-                _print("   ✔  Ad wait complete — proceeding")
+                _print("   ⏳ Waiting for networkidle...")
+                page.wait_for_load_state("networkidle", timeout=100000)
+                iframes = page.frames[1:]
+                _print(f"   📦 {len(iframes)} iframes found")
+                noisy_scroll(page, _print)
+                _clicked = set()
+                for i, frame in enumerate(iframes):
+                    try:
+                        frame.wait_for_load_state("domcontentloaded", timeout=45000)
+                        texts = frame.locator("*:not(style):not(script)").all_inner_texts()
+                        flat = "\n".join(t.strip() for t in texts if t.strip() and not t.strip().startswith(("{", ".", "#", "html", "body", "table", "a{", "@")))
+                        _print(f"   [iframe {i}] url: {frame.url[:80]}")
+                        if flat:
+                            _print(f"   [iframe {i}] text:\n{flat[:800]}")
+                        elems = frame.locator("[alt]").all()
+                        for j, el in enumerate(elems):
+                            alt = el.get_attribute("alt", timeout=8000)
+                            if alt:
+                                _print(f"   [iframe {i}] elem[{j}] alt: {alt}")
+                                click_if_keyword(el, alt, context, _print, _clicked)
+                    except Exception as fe:
+                        _print(f"   [iframe {i}] {frame.url[:60]} — read failed: {fe}")
+                # target iframe[data-aa="2433217"] specifically via frame_locator
+                try:
+                    fl = page.frame_locator("iframe[data-aa='2433217']")
+                    aa_text = fl.locator("body").inner_text(timeout=10000).strip()
+                    _print(f"   [data-aa=2433217] text: {aa_text[:400]}")
+                    aa_link = fl.locator("a").first
+                    aa_alt  = aa_link.get_attribute("alt", timeout=5000) or aa_text
+                    click_if_keyword(aa_link, aa_alt, context, _print, _clicked)
+                except Exception as ae:
+                    _print(f"   [data-aa=2433217] read failed: {ae}")
+                _print("   ✔  cryptyos block complete")
             except Exception as e:
                 _print(f"   ❌ cryptyos visit failed: {e}")
             _print("─────────────────────────────────────────────────────\n")
